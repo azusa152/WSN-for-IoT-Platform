@@ -1,6 +1,6 @@
 ////////////arduino setting
 const byte ledPin = 13; 
-const int routerName=2;
+const int routerName=1;
 
 //////////////////////sensor setting
 #include <dht.h>     
@@ -11,7 +11,7 @@ dht DHT;
 #include <avr/sleep.h>
 volatile int sleep_count = 0; // Keep track of how many sleep
 const int workTime=5; //read 5 seconds
-int sleepMode =2; // sleepeMode*8senconds is pediod of sleep 
+int sleepMode =1; // sleepeMode*8senconds is pediod of sleep 
 
 /////////////////////xbee setting
 #include <XBee.h>
@@ -40,7 +40,7 @@ void wakeup()
 {
    int times=0; // record 
    digitalWrite(ledPin, HIGH);
-   wakeupSend();
+   dataSend();
    while(times<=(workTime*10))   //0.1 second 
    { 
       times ++;
@@ -49,7 +49,7 @@ void wakeup()
       delay(100);
    }
    
-   sleepSend();
+   dataSend();
    digitalWrite(ledPin, LOW);
    watchdogOn();
    sleep_count=0;
@@ -92,27 +92,28 @@ switch(xbeeIn)
 }
 /* send format
 routerName' 'sleepMode' 'workTime' 'Humidity' 'Temperature' '
-
+{"router": ,"sleepMode": ,"workTime": ,"Humidity", "Temperature" }
 */
 /////////////////////////////////////////wakeup send////////////////////////////////
-void wakeupSend()
+void dataSend()
 {
-   String dataString="Router:";
-   dataString=dataString+String(routerName);
-   dataString=dataString+" is wakeup";
-   dataString=dataString+" sleepMode:";
-   dataString=dataString+String(sleepMode);
-   
-   
-   DHT.read11(dht_dpin); 
-   String Humidity="Humidity"+String(DHT.humidity);
-   String Temperature="Temperature"+String(DHT.temperature);
-   dataString= dataString+Humidity+Temperature;
+   String postData="{\"Router\":";
+   postData.concat(String(routerName));
+   postData.concat(",\"sleepMode\":");
+   postData.concat(String(sleepMode));
+   postData.concat(",\"workTime\":");
+   postData.concat(String(workTime));
 
-   dataString=dataString+" ";
+   DHT.read11(dht_dpin); 
+   postData.concat(",\"Humidity\":");
+   postData.concat(String(DHT.humidity));
+   postData.concat(",\"Temperature\":");
+   postData.concat(String(DHT.temperature));
+   
+   postData.concat("} ");
     
-   uint8_t dataArray[dataString.length()];
-   dataString.toCharArray(dataArray, dataString.length());
+   uint8_t dataArray[postData.length()];
+   postData.toCharArray(dataArray, postData.length());
    ZBTxRequest zbTx = ZBTxRequest(addr64, dataArray, sizeof(dataArray));
    xbee.send(zbTx);
    delay(100);
@@ -121,23 +122,23 @@ void wakeupSend()
 ///////////////////////////////////sleep send////////////////////////////////////
 void sleepSend()
 {
-   String dataString="Router:";
-   dataString=dataString+String(routerName);
-   dataString=dataString+" is sleep";
-   dataString=dataString+" sleepMode:";
-   dataString=dataString+String(sleepMode);
+   String postData="Router:";
+   postData=postData+String(routerName);
+   postData=postData+" is sleep";
+   postData=postData+" sleepMode:";
+   postData=postData+String(sleepMode);
    
    
    DHT.read11(dht_dpin); 
    String Humidity="Humidity"+String(DHT.humidity);
    String Temperature="Temperature"+String(DHT.temperature);
-   dataString= dataString+Humidity+Temperature;
+   postData= postData+Humidity+Temperature;
 
-   dataString=dataString+" ";
+   postData=postData+" ";
    
 
-   uint8_t dataArray[dataString.length()];
-   dataString.toCharArray(dataArray, dataString.length());
+   uint8_t dataArray[postData.length()];
+   postData.toCharArray(dataArray, postData.length());
    ZBTxRequest zbTx = ZBTxRequest(addr64, dataArray, sizeof(dataArray));
    xbee.send(zbTx);
    delay(100);
