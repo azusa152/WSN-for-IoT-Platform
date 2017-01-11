@@ -1,8 +1,7 @@
 ////////////arduino setting
 const byte ledPin = 13; 
 const int routerName=2;
- int sleepMode=2;
- 
+
 //////////////////////sensor setting
 #include <dht.h>     
 #define dht_dpin A0 
@@ -12,15 +11,15 @@ dht DHT;
 #include <avr/sleep.h>
 volatile int sleep_count = 0; // Keep track of how many sleep
 const int workTime=5; //read 5 seconds
-int sleep_total =2; //demo
-
+int sleepMode =2; // sleepeMode*8senconds is pediod of sleep 
 
 /////////////////////xbee setting
 #include <XBee.h>
 XBee xbee = XBee();
 XBeeAddress64 addr64 = XBeeAddress64(0x0013a200, 0x40c8d191);
 
- 
+
+
 void setup() {
   Serial.begin(9600); 
   pinMode(ledPin, OUTPUT);
@@ -30,19 +29,19 @@ void setup() {
 void loop() 
 {
   goToSleep();
- if (sleep_count == sleep_total) 
+ if (sleep_count == sleepMode) 
  {
    wakeup();
  }
 }
 
-///////////////////////////working process//////////////////////////////////
+///////////////////////////wakeup process//////////////////////////////////
 void wakeup()
 {
-   int times=0;
+   int times=0; // record 
    digitalWrite(ledPin, HIGH);
    wakeupSend();
-   while(times<=(workTime*10))
+   while(times<=(workTime*10))   //0.1 second 
    { 
       times ++;
       receive();
@@ -76,12 +75,12 @@ switch(xbeeIn)
                  break;
                  
         case '1':
-                 sleep_total=1;
+                 sleepMode=1;
                  Serial.write("sleep 8 seconds ");
                  break;
                  
         case '2':
-                 sleep_total=2;
+                 sleepMode=2;
                  Serial.write("sleep 16 seconds ");
                  break;
        default:
@@ -91,7 +90,10 @@ switch(xbeeIn)
       }
   
 }
+/* send format
+routerName' 'sleepMode' 'workTime' 'Humidity' 'Temperature' '
 
+*/
 /////////////////////////////////////////wakeup send////////////////////////////////
 void wakeupSend()
 {
