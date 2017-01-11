@@ -1,0 +1,26 @@
+Total packet size of Zigbee protocol is 128 Bytes.
+
+Without Security: 
+ZigBee Header: 28 bytes, Data: 100 bytes
+
+With Networking security:
+ZigBee Header: 28 bytes, Network security header: 18, Data: 82 bytes
+
+With Application security:
+ZigBee Header: 28 bytes, Network security header: 18, Application Security header: 8 Data: 82 bytes
+
+987
+10
+3
+
+COR
+0013A200
+40C8D191
+
+ROUTER1
+13A200
+40C8D185
+
+ROUTER2
+13A200
+4071F80D
