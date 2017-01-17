@@ -17,6 +17,8 @@ int sleepMode =1; // sleepeMode*8senconds is pediod of sleep
 #include <XBee.h>
 XBee xbee = XBee();
 XBeeAddress64 addr64 = XBeeAddress64(0x0013a200, 0x40c8d191);
+ZBRxResponse zbRx = ZBRxResponse();
+long cordinatorAddress= 0x40c8d191;
 
 
 
@@ -44,7 +46,7 @@ void wakeup()
    while(times<=(workTime*10))   //0.1 second 
    { 
       times ++;
-      receive();
+      dataReceive();
       digitalWrite(ledPin, HIGH);
       delay(100);
    }
@@ -55,46 +57,36 @@ void wakeup()
    sleep_count=0;
 }
 ////////////////////////////receive action////////////////////////
-void receive()
+void dataReceive()
 {
-char xbeeIn=Serial.read();
-switch(xbeeIn)
-      {
-        case 'a':
-                 Serial.write(routerName);
-                 Serial.write("is receive:");
-                 Serial.write(xbeeIn);
-                 Serial.write("   ");
-                 
-                 if(Serial.read()=='5')
-                  Serial.write("azusa");
-                 digitalWrite(ledPin, HIGH);
-                 delay(100);
-                 digitalWrite(ledPin, LOW);
-                 delay(100);
-                 break;
-                 
-        case '1':
-                 sleepMode=1;
-                 Serial.write("sleep 8 seconds ");
-                 break;
-                 
-        case '2':
-                 sleepMode=2;
-                 Serial.write("sleep 16 seconds ");
-                 break;
-       default:
-                 
-                 break;
-
+xbee.readPacket();
+  if (xbee.getResponse().isAvailable()) {
+    if (xbee.getResponse().getApiId() == ZB_RX_RESPONSE) {
+      xbee.getResponse().getZBRxResponse(zbRx);
+      if (zbRx.getRemoteAddress64().getLsb() ==cordinatorAddress) {    
+         String receiveData = zbRx.getData();
+         switch (receiveData.toInt() ){
+          case 1:
+                  sleepMode=1;
+                  break;
+          case 2:
+                  sleepMode=2;
+                  break;
+          default: 
+                  break;
+          
+         }
+       
       }
+    }
+  }
   
 }
 /* send format
 routerName' 'sleepMode' 'workTime' 'Humidity' 'Temperature' '
 {"router": ,"sleepMode": ,"workTime": ,"Humidity", "Temperature" }
 */
-/////////////////////////////////////////wakeup send////////////////////////////////
+/////////////////////////////////////////dataSend////////////////////////////////
 void dataSend()
 {
    String postData="{\"Router\":";
@@ -119,31 +111,7 @@ void dataSend()
    delay(100);
   
 }
-///////////////////////////////////sleep send////////////////////////////////////
-void sleepSend()
-{
-   String postData="Router:";
-   postData=postData+String(routerName);
-   postData=postData+" is sleep";
-   postData=postData+" sleepMode:";
-   postData=postData+String(sleepMode);
-   
-   
-   DHT.read11(dht_dpin); 
-   String Humidity="Humidity"+String(DHT.humidity);
-   String Temperature="Temperature"+String(DHT.temperature);
-   postData= postData+Humidity+Temperature;
 
-   postData=postData+" ";
-   
-
-   uint8_t dataArray[postData.length()];
-   postData.toCharArray(dataArray, postData.length());
-   ZBTxRequest zbTx = ZBTxRequest(addr64, dataArray, sizeof(dataArray));
-   xbee.send(zbTx);
-   delay(100);
-  
-}
 
 ///////////////////////////////////////////Sleep////////////////////////////////////////////////////////////////
 void goToSleep()   
