@@ -8,6 +8,7 @@
 ////////connect device setting
 long endDeviceAddress[100];
 int deviceQuanty=0;
+String postData="1";
 
 //////////////xbee setting
 #include <XBee.h>
@@ -15,17 +16,18 @@ XBee xbee = XBee();
 XBeeAddress64 addr64 = XBeeAddress64(0x0013a200, 0x40c8d185);
 ZBRxResponse zbRx = ZBRxResponse();
 long cordinatorAddress= 0x40c8d185;
-String postData="1";
+
 
 
 void setup() {
   Serial.begin(9600); 
+  xbee.begin(Serial);
   pinMode(ledPin, OUTPUT);
    
 }
 
 void loop() {
-  dataSend();
+ // dataSend();
   dataReceive();
 }
 
@@ -43,73 +45,35 @@ void dataReceive()
 xbee.readPacket();
   if (xbee.getResponse().isAvailable()) {
     if (xbee.getResponse().getApiId() == ZB_RX_RESPONSE) {
-     
+        
       xbee.getResponse().getZBRxResponse(zbRx);
       long receiveAddress=zbRx.getRemoteAddress64().getLsb();
       String receiveData = zbRx.getData();
       
-      char  json[100];
-      
-      receiveData.toCharArray(json,zbRx.getDataLength());
-   
+      char  json[200];
       StaticJsonBuffer<200> jsonBuffer;
-   
+      receiveData.toCharArray(json,zbRx.getDataLength());
       JsonObject& root = jsonBuffer.parseObject(json);
-
-      int router = root["Router"][0];
-      //int router=jsonParse(zbRx);
+      int router = root["Router"];
+    
        if (!root.success()) {
           return;
           }
       blinkLed(router);
-      /////////////////debug
-      /*for(int i=0;i<=deviceQuanty;i++)
-      {
-        if(endDeviceAddress[i]==NULL)
-        {
-          deviceQuanty++;
-          endDeviceAddress[i]=receiveAddress;
-          
-          break;
-        }
-        else if(endDeviceAddress[i]==receiveAddress)
-        {
-          break;
-        }
-        else
-          continue;
-      }
-      
-      if (receiveAddress ==endDeviceAddress[deviceQuanty-1]) {    
-       blinkLed(deviceQuanty);
-      }*/
-      ////////////////////////
-      
+      memset(json,0,sizeof(json));
+     if(endDeviceAddress[router]==NULL)
+     {
+      endDeviceAddress[router]=receiveAddress;
+      deviceQuanty++;
+     }     
     }
   }
   
 }
-/*
-int jsonParse(ZBRxResponse zb){
-   char  json[zb.getDataLength()];
-   String receiveData = zbRx.getData();
-   receiveData.toCharArray(json,zb.getDataLength());
-   
-   StaticJsonBuffer<200> jsonBuffer;
-   
-   JsonObject& root = jsonBuffer.parseObject(json);
-   
-    if (!root.success()) {
-    return;
-  }
-   int router = root["Router"][0];
-   return router;
-   
-}
-*/
+
 void blinkLed(int times)
 {
-  for(int i=0;i<=times;i++)
+  for(int i=1;i<=times;i++)
   {
          digitalWrite(ledPin,HIGH);
          delay(300);                       // wait for a second
