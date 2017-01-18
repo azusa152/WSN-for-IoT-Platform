@@ -1,6 +1,6 @@
 ////////////arduino setting
 const byte ledPin = 13; 
-const int routerName=1;
+const int routerName=2;
 
 //////////////////////sensor setting
 #include <dht.h>     
