@@ -1,4 +1,4 @@
- const byte ledPin = 13; 
+ const byte kLedPin = 13; 
  /* packet format
 routerName' 'sleepMode' 'workTime' 'Humidity' 'Temperature' '
 {"router": ,"sleepMode": ,"workTime": ,"Humidity", "Temperature" }
@@ -7,16 +7,22 @@ routerName' 'sleepMode' 'workTime' 'Humidity' 'Temperature' '
 #include <ArduinoJson.h>
 
 ////////connect device setting
-long endDeviceAddress[100];
-int deviceQuanty=0;
-String postData="1";
+typedef struct
+ {
+     long address;
+     boolean work_flag=false;
+ }  ConnectedDevice;
+ ConnectedDevice connect_device[100];
+int device_quanty=0;
+String post_data="1";
 
+ 
 //////////////xbee setting
 #include <XBee.h>
 XBee xbee = XBee();
 XBeeAddress64 addr64 = XBeeAddress64(0x0013a200, 0x40c8d185);
 ZBRxResponse zbRx = ZBRxResponse();
-long cordinatorAddress= 0x40c8d185;
+long cordinator_address= 0x40c8d185;
 
 ///////////wifi setting
 #include "ESP8266.h"
@@ -28,90 +34,108 @@ ESP8266 wifi(Serial1);
 #define HOST_NAME "api.thingspeak.com"
 #define KEY "EP9PGHQ1B4VXDN9H"
 #define HOST_PORT (80)
-uint8_t buffer[1024] = {0};
+
 
 void setup() {
   Serial.begin(9600); 
   xbee.begin(Serial);
-  pinMode(ledPin, OUTPUT);
-  connectWifi();
+  pinMode(kLedPin, OUTPUT);
+  ConnectToWifi();
    
 }
 
 void loop() {
- // dataSend();
-  dataReceive();
+ // DataSend();
+  DataReceive();
 
 }
 
 
-void dataSend()
+void DataSend()
 {
-   uint8_t dataArray[postData.length()];
-   postData.toCharArray(dataArray, postData.length());
+   uint8_t dataArray[post_data.length()];
+   post_data.toCharArray(dataArray, post_data.length());
    ZBTxRequest zbTx = ZBTxRequest(addr64, dataArray, sizeof(dataArray));
    xbee.send(zbTx);
 }
 
-void dataReceive()
+void DataReceive()
 {
 xbee.readPacket();
   if (xbee.getResponse().isAvailable()) {
     if (xbee.getResponse().getApiId() == ZB_RX_RESPONSE) {
         
       xbee.getResponse().getZBRxResponse(zbRx);
-      long receiveAddress=zbRx.getRemoteAddress64().getLsb();
-      String receiveData = zbRx.getData();
+      long receive_address=zbRx.getRemoteAddress64().getLsb();
+      String receive_data = zbRx.getData();
       
-      char  json[200];
-      StaticJsonBuffer<200> jsonBuffer;
-      receiveData.toCharArray(json,zbRx.getDataLength());
-      JsonObject& root = jsonBuffer.parseObject(json);
-      int router = root["Router"];
-       if (!root.success()) {
+      char  json_parse[200];
+      StaticJsonBuffer<200> json_buffer;
+      receive_data.toCharArray(json_parse,zbRx.getDataLength());
+      JsonObject& receive_json_data = json_buffer.parseObject(json_parse);
+       if (!receive_json_data.success()) {
           return;
           }
-      String Temperature=root["Temperature"];
-      String Humidity= root["Humidity"];
+          
+      int router_num = receive_json_data["Router"];
+      String temperature=receive_json_data["Temperature"];
+      String humidity= receive_json_data["Humidity"];
 
   
-      wifiSend(Temperature,Humidity);
-      blinkLed(router);
+      WifiSend(temperature,humidity);
+      BlinkLed(router_num); // debug
+
+      memset(json_parse,0,sizeof(json_parse));
       
-      memset(json,0,sizeof(json));
-     if(endDeviceAddress[router]==NULL)
+     if(connect_device[router_num].address==NULL)  
      {
-      endDeviceAddress[router]=receiveAddress;
-      deviceQuanty++;
-     }     
+      connect_device[router_num].address=receive_address;
+      connect_device[router_num].work_flag=true;
+      device_quanty++;
+     }
+     else
+     {
+      switch(connect_device[router_num].work_flag)
+      {
+        case false:
+          connect_device[router_num].work_flag=true;
+          break;
+        case true:
+          connect_device[router_num].work_flag=false;
+          break;
+        default:
+          break;
+        
+      }
+     }
     }
   }
   
 }
 
-void blinkLed(int times)
+void BlinkLed(int times)
 {
   for(int i=1;i<=times;i++)
   {
-         digitalWrite(ledPin,HIGH);
+         digitalWrite(kLedPin,HIGH);
          delay(150);                       // wait for a second
-         digitalWrite(ledPin, LOW);    // turn the LED off by making the voltage LOW
+         digitalWrite(kLedPin, LOW);    // turn the LED off by making the voltage LOW
          delay(150);  
   }
 }
-void connectWifi()
+void ConnectToWifi()
 {
  
     if (wifi.setOprToStation()) {
-       blinkLed(3);
+       BlinkLed(3);
     }
      if (wifi.joinAP(SSID, PASSWORD)) {
-       blinkLed(3);
+       BlinkLed(3);
      }
     wifi.disableMUX();
    
 }
-void wifiSend(String temp,String humi)
+void WifiSend(String temp,String humi)
 {
     if(wifi.createTCP(HOST_NAME, HOST_PORT))
     {
