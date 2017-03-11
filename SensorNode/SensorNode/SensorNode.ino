@@ -3,10 +3,12 @@
 #define DHT_PIN A0 
 dht DHT;
 
-////////////arduino setting
+//////////////////////arduino setting
 const byte kLedPin = 13; 
 const int kRouterName=1;
 const int kNodeType=0;
+#include <TrueRandom.h>
+byte uuid_number[16]; // UUIDs in binary form are 16 bytes long
 
 //////////////////////sleep setting
 #include <avr/sleep.h>
@@ -15,32 +17,31 @@ const int kWorkTime=5; //work 5 seconds
 int sleep_time=1;  // sleep_time*8seconds is pediod of sleep 
 int sleep_mode =1; // 1=8seconds ;2=16seconds; 3=1hr
 
-////////////////////gateway setting
+//////////////////////gateway setting
 boolean cordinator_flag=false;
 long  cordinator_low_address= 0X00000000;
 long  cordinator_high_address= 0x0013a200;
 
-/////////////////////xbee setting
+//////////////////////xbee setting
 #include <XBee.h>
 XBee xbee = XBee();
 ZBRxResponse zbRx = ZBRxResponse();
 
 
-
-////////////////////main 
+//////////////////////main function
 void setup() {
   Serial.begin(9600); 
+  TrueRandom.uuid(uuid_number);//set uuid
   pinMode(kLedPin, OUTPUT);
-  WatchdogOn(); 
+  WatchdogOn();   //start Watchdog
 }
  
 void loop() 
 {
-  if(cordinator_flag==true)
+  if(cordinator_flag==true)  //to check if gateway is connect
   {
      GoToSleep();
-     
-     if (sleep_count == sleep_time)  //if time up
+     if (sleep_count == sleep_time)  //if time up,then wake up
      {
         WakeUp();
      }
@@ -88,6 +89,8 @@ xbee.readPacket();
                   cordinator_flag=true;
                   cordinator_low_address=zbRx.getRemoteAddress64().getLsb();
                   BlinkLed(3);
+                  WatchdogOn();
+                  ConfirmSend();// to confirm this node to gateway
                   break;
           case 1:
                   BlinkLed(1);
@@ -126,24 +129,47 @@ xbee.readPacket();
 
 /* data  format
 'kNodeType' 'kRouterName' 'sleep_mode'  'Humidity' 'Temperature' '
-{"type" ,"number": ,"sleep_mode": , ,"Humidity", "Temperature" }
+{"type" ,"uuid": ,"sleep_mode": , ,"Humidity", "Temperature" }
 */
 /////////////////////////////////////////DataSend////////////////////////////////
 void DataSend()
 {
    XBeeAddress64 addr64 = XBeeAddress64(cordinator_high_address, cordinator_low_address); // xbee address
    DHT.read11(DHT_PIN);  //dht read
+   String uuid_string=UUIDToString(uuid_number);;
    
-   String trans_data="{\"Type\":";
-   trans_data.concat(String(kNodeType));
-   trans_data.concat(",\"Number\":");
-   trans_data.concat(String(kRouterName));
+   String trans_data="{\"UUID\":";
+   trans_data.concat(uuid_string);
    trans_data.concat(",\"sleep_mode\":");
    trans_data.concat(String(sleep_mode));
    trans_data.concat(",\"Humidity\":");
    trans_data.concat(String(DHT.humidity));
    trans_data.concat(",\"Temperature\":");
    trans_data.concat(String(DHT.temperature));
+   trans_data.concat("} ");
+    
+   uint8_t trans_data_array[trans_data.length()];
+   trans_data.toCharArray(trans_data_array, trans_data.length());
+   ZBTxRequest zbTx = ZBTxRequest(addr64, trans_data_array, sizeof(trans_data_array));
+   xbee.send(zbTx);
+   delay(100);
+  
+}
+/* data  format
+'kNodeType' 'kRouterName' 'sleep_mode'  'Humidity' 'Temperature' '
+{"type" ,"uuid": ,"sleep_mode": , ,"Humidity", "Temperature" }
+*/
+/////////////////////confirm gateway
+void ConfirmSend()
+{
+   XBeeAddress64 addr64 = XBeeAddress64(cordinator_high_address, cordinator_low_address); // xbee address
+   DHT.read11(DHT_PIN);  //dht read
+   String uuid_string=UUIDToString(uuid_number);;
+   
+   String trans_data="{\"Type\":";
+   trans_data.concat(String(kNodeType));
+   trans_data.concat(",\"UUID\":");
+   trans_data.concat(uuid_string);
    trans_data.concat("} ");
     
    uint8_t trans_data_array[trans_data.length()];
@@ -197,6 +223,21 @@ MCUSR = MCUSR & B11110111;
 ISR(WDT_vect)
 {
 sleep_count ++; 
+}
+
+//////////////////////////uuid convert 
+String UUIDToString(byte* number) {
+  String uuid_string;
+  
+  for (int i=0; i<16; i++) {
+  int top_digit = number[i] >> 4;
+  int bottom_digit = number[i] & 0x0f;
+  uuid_string.concat(String("0123456789ABCDEF"[top_digit]));
+  uuid_string.concat(String("0123456789ABCDEF"[bottom_digit]));
+  }
+  
+  return uuid_string;
+
 }
 
 ///////////////////////debug////////////////////////////////////
