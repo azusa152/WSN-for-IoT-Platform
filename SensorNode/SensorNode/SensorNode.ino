@@ -1,39 +1,45 @@
-//////////////////////sensor setting
+//////////////////////SENSOR CONFIG 
 #include <dht.h>     
 #define DHT_PIN A0 
 dht DHT;
 
-//////////////////////arduino setting
+//////////////////////ARDUINO CONFIG 
 const byte kLedPin = 13; 
 const int kRouterName=1;
 const int kNodeType=0;
 #include <TrueRandom.h>
 byte uuid_number[16]; // UUIDs in binary form are 16 bytes long
 
-//////////////////////sleep setting
+//////////////////////SLEEP CONFIG
 #include <avr/sleep.h>
 volatile int sleep_count = 0; // Keep track of how many sleep done
 const int kWorkTime=5; //work 5 seconds
 int sleep_time=1;  // sleep_time*8seconds is pediod of sleep 
 int sleep_mode =1; // 1=8seconds ;2=16seconds; 3=1hr
 
-//////////////////////gateway setting
+//////////////////////GATEWAY CONFIG
 boolean cordinator_flag=false;
+const long  cordinator_high_address= 0x0013a200;
 long  cordinator_low_address= 0X00000000;
-long  cordinator_high_address= 0x0013a200;
 
-//////////////////////xbee setting
+//////////////////////XBEE CONFIG
 #include <XBee.h>
 XBee xbee = XBee();
 ZBRxResponse zbRx = ZBRxResponse();
 
+//////////////////////EMERGENCY CONFIG
+const int kEmergencyTime=10; //8*10=emergency mode time
+boolean emergency_flag=false;
+int emergency_count=0;
+int original_sleep_mode =1;
+float average_tempature=0;
+int kBias=20;
 
-//////////////////////main function
+//////////////////////MAIN FUNCTION
 void setup() {
   Serial.begin(9600); 
   TrueRandom.uuid(uuid_number);//set uuid
   pinMode(kLedPin, OUTPUT);
-  WatchdogOn();   //start Watchdog
 }
  
 void loop() 
@@ -53,12 +59,16 @@ void loop()
   
 }
 
-///////////////////////////WakeUp process//////////////////////////////////
+//////////////////////WAKEUP PROCESS
 void WakeUp()
 {
+   CheckEmergencyMode();
+   if(emergency_flag==true)
+   return;
+   
    int times=0; // time   
    digitalWrite(kLedPin, HIGH);
-   DataSend();                    //send data and notify gateway wakeup
+   DataSend();                    
    CheckSleepMode();
    while(times<=(kWorkTime*10))   //0.1 second ;wait receive process
    { 
@@ -67,14 +77,11 @@ void WakeUp()
       digitalWrite(kLedPin, HIGH);
       delay(100);
    }
-   
-   DataSend();                  //send data and notify gateway going to sleep
    digitalWrite(kLedPin, LOW);  //turn off led 
-   WatchdogOn();                // reset watch dog
-   sleep_count=0;               //reset sleep count
+   ResetSleep();
 }
 
-////////////////////////////receive action////////////////////////
+//////////////////////RECEIVE COMMAND
 void DataReceive()
 {
 xbee.readPacket();
@@ -86,11 +93,13 @@ xbee.readPacket();
       {
         switch (receive_data.toInt() ){
           case 0:
+                  BlinkLed(3);
+                  
                   cordinator_flag=true;
                   cordinator_low_address=zbRx.getRemoteAddress64().getLsb();
-                  BlinkLed(3);
-                  WatchdogOn();
+                  delay(TrueRandom.random(1,1001));// avoid collision
                   ConfirmSend();// to confirm this node to gateway
+                  ResetSleep();
                   break;
           case 1:
                   BlinkLed(1);
@@ -111,6 +120,11 @@ xbee.readPacket();
                   break;
           case 1:
                   BlinkLed(1);
+                  if(emergency_flag==false)        
+                  {
+                   emergency_flag=true;
+                   original_sleep_mode=sleep_mode;
+                  }
                   break;
           case 2:
                   BlinkLed(2);
@@ -127,17 +141,16 @@ xbee.readPacket();
 }
 
 
-/* data  format
-'kNodeType' 'kRouterName' 'sleep_mode'  'Humidity' 'Temperature' '
-{"type" ,"uuid": ,"sleep_mode": , ,"Humidity", "Temperature" }
+/* DATA FORMAT
+{"uuid": ,"sleep_mode": , ,"Humidity", "Temperature","Event" }
 */
-/////////////////////////////////////////DataSend////////////////////////////////
+//////////////////////SEND ACTION
 void DataSend()
 {
    XBeeAddress64 addr64 = XBeeAddress64(cordinator_high_address, cordinator_low_address); // xbee address
    DHT.read11(DHT_PIN);  //dht read
    String uuid_string=UUIDToString(uuid_number);;
-   
+   //CheckAverageTempature(DHT.temperature);
    String trans_data="{\"UUID\":";
    trans_data.concat(uuid_string);
    trans_data.concat(",\"sleep_mode\":");
@@ -146,6 +159,8 @@ void DataSend()
    trans_data.concat(String(DHT.humidity));
    trans_data.concat(",\"Temperature\":");
    trans_data.concat(String(DHT.temperature));
+   trans_data.concat(",\"Event\":");
+   trans_data.concat("0");
    trans_data.concat("} ");
     
    uint8_t trans_data_array[trans_data.length()];
@@ -155,11 +170,10 @@ void DataSend()
    delay(100);
   
 }
-/* data  format
-'kNodeType' 'kRouterName' 'sleep_mode'  'Humidity' 'Temperature' '
-{"type" ,"uuid": ,"sleep_mode": , ,"Humidity", "Temperature" }
+/* DATA FORMAT
+{"type" ,"uuid": }
 */
-/////////////////////confirm gateway
+//////////////////////CONFIRM GATEWAY
 void ConfirmSend()
 {
    XBeeAddress64 addr64 = XBeeAddress64(cordinator_high_address, cordinator_low_address); // xbee address
@@ -179,8 +193,33 @@ void ConfirmSend()
    delay(100);
   
 }
+/* DATA FORMAT
+{"uuid": ,"Temperature","Event" }
+*/
+//////////////////////CONFIRM GATEWAY
+void EmergencySend()
+{
+   XBeeAddress64 addr64 = XBeeAddress64(cordinator_high_address, cordinator_low_address); // xbee address
+   DHT.read11(DHT_PIN);  //dht read
+   String uuid_string=UUIDToString(uuid_number);;
 
-////////////////////////////////check sleep mode has been changed
+   String trans_data="{\"UUID\":";
+   trans_data.concat(uuid_string);
+   trans_data.concat(",\"Temperature\":");
+   trans_data.concat(String(DHT.temperature));
+   trans_data.concat(",\"Event\":");
+   trans_data.concat("1");
+   trans_data.concat("} ");
+  
+   uint8_t trans_data_array[trans_data.length()];
+   trans_data.toCharArray(trans_data_array, trans_data.length());
+   ZBTxRequest zbTx = ZBTxRequest(addr64, trans_data_array, sizeof(trans_data_array));
+   xbee.send(zbTx);
+   delay(100);
+  
+}
+
+//////////////////////CHECK SLEEP MODE
 void CheckSleepMode()
 {
   switch(sleep_mode)
@@ -199,7 +238,7 @@ void CheckSleepMode()
    }
 }
 
-///////////////////////////////////////////Sleep////////////////////////////////////////////////////////////////
+//////////////////////SLEEP
 void GoToSleep()   
 {
 set_sleep_mode(SLEEP_MODE_PWR_DOWN); // Set sleep mode.
@@ -208,7 +247,7 @@ sleep_mode(); // Enter sleep mode.
 sleep_disable(); // Disable sleep mode after waking.
                      
 }
-///////////////////////////////////////////Watch dog////////////////////////////////////////////////////////////////
+//////////////////////WATCH DOG
 void WatchdogOn() 
 {
 
@@ -225,7 +264,7 @@ ISR(WDT_vect)
 sleep_count ++; 
 }
 
-//////////////////////////uuid convert 
+//////////////////////UUID TO STRING
 String UUIDToString(byte* number) {
   String uuid_string;
   
@@ -240,7 +279,7 @@ String UUIDToString(byte* number) {
 
 }
 
-///////////////////////debug////////////////////////////////////
+//////////////////////DEBUG
 void BlinkLed(int times)
 {
   for(int i=1;i<=times;i++)
@@ -251,3 +290,51 @@ void BlinkLed(int times)
          delay(150);  
   }
 }
+//////////////////////RESET SLEEP
+void ResetSleep()
+{   
+   WatchdogOn();                // reset watch dog
+   sleep_count=0;               //reset sleep count
+}
+//////////////////////EMERGENCY MODE
+void CheckEmergencyMode()
+{
+   if(emergency_flag==true)
+   {
+    emergency_count++;
+    EmergencySend();
+    ResetSleep();
+   }
+   
+   if(emergency_count==kEmergencyTime)
+   {
+    emergency_count=0;
+    emergency_flag=false;
+    sleep_mode=original_sleep_mode;
+   }
+   
+
+}
+///////////////CheckAverageTempature
+void CheckAverageTempature(float tempature )
+{
+  int past_average_tempature=average_tempature;
+  
+  if(average_tempature!=0)
+  {
+      average_tempature=average_tempature+tempature;
+  }
+  else
+  {
+    average_tempature=tempature;    
+  }
+
+  if((average_tempature/past_average_tempature)<(1-(kBias/100))||(average_tempature/past_average_tempature)>(1-(kBias/100)))
+  {
+    EmergencySend();
+    emergency_flag=true;
+  }
+
+
+}
+
