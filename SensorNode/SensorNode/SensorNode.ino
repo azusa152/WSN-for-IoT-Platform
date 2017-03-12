@@ -28,12 +28,13 @@ XBee xbee = XBee();
 ZBRxResponse zbRx = ZBRxResponse();
 
 //////////////////////EMERGENCY CONFIG
-const int kEmergencyTime=10; //8*10=emergency mode time
+const int kEmergencyTime=3; //8*10=emergency mode time
 boolean emergency_flag=false;
 int emergency_count=0;
 int original_sleep_mode =1;
-float average_tempature=0;
-int kBias=20;
+float average_temperature=0;
+float kBias=20;
+float original_temperature=0;
 
 //////////////////////MAIN FUNCTION
 void setup() {
@@ -62,6 +63,7 @@ void loop()
 //////////////////////WAKEUP PROCESS
 void WakeUp()
 {
+   
    CheckEmergencyMode();
    if(emergency_flag==true)
    return;
@@ -70,13 +72,26 @@ void WakeUp()
    digitalWrite(kLedPin, HIGH);
    DataSend();                    
    CheckSleepMode();
-   while(times<=(kWorkTime*10))   //0.1 second ;wait receive process
+   delay(500);
+   while(times<=(kWorkTime*2))   //0.1 second ;wait receive process
    { 
       times ++;
       DataReceive();
+
+      
+      CheckAveragetemperature();            
+      if(emergency_flag==true)
+      {
+        digitalWrite(kLedPin, LOW);  //turn off led 
+        ResetSleep();
+        return;
+      }
+      
+      
       digitalWrite(kLedPin, HIGH);
-      delay(100);
+      delay(500);
    }
+   
    digitalWrite(kLedPin, LOW);  //turn off led 
    ResetSleep();
 }
@@ -124,6 +139,8 @@ xbee.readPacket();
                   {
                    emergency_flag=true;
                    original_sleep_mode=sleep_mode;
+                   original_temperature=DHT.temperature;
+                   EmergencySend();
                   }
                   break;
           case 2:
@@ -148,9 +165,9 @@ xbee.readPacket();
 void DataSend()
 {
    XBeeAddress64 addr64 = XBeeAddress64(cordinator_high_address, cordinator_low_address); // xbee address
-   DHT.read11(DHT_PIN);  //dht read
-   String uuid_string=UUIDToString(uuid_number);;
-   //CheckAverageTempature(DHT.temperature);
+   String uuid_string=UUIDToString(uuid_number);
+   CheckAveragetemperature();
+   
    String trans_data="{\"UUID\":";
    trans_data.concat(uuid_string);
    trans_data.concat(",\"sleep_mode\":");
@@ -177,7 +194,6 @@ void DataSend()
 void ConfirmSend()
 {
    XBeeAddress64 addr64 = XBeeAddress64(cordinator_high_address, cordinator_low_address); // xbee address
-   DHT.read11(DHT_PIN);  //dht read
    String uuid_string=UUIDToString(uuid_number);;
    
    String trans_data="{\"Type\":";
@@ -196,7 +212,7 @@ void ConfirmSend()
 /* DATA FORMAT
 {"uuid": ,"Temperature","Event" }
 */
-//////////////////////CONFIRM GATEWAY
+//////////////////////EmergencySend
 void EmergencySend()
 {
    XBeeAddress64 addr64 = XBeeAddress64(cordinator_high_address, cordinator_low_address); // xbee address
@@ -309,32 +325,40 @@ void CheckEmergencyMode()
    if(emergency_count==kEmergencyTime)
    {
     emergency_count=0;
-    emergency_flag=false;
-    sleep_mode=original_sleep_mode;
+    CheckEmergenceRecover( );
    }
    
 
 }
-///////////////CheckAverageTempature
-void CheckAverageTempature(float tempature )
+///////////////CheckAveragetemperature
+void CheckAveragetemperature( )
 {
-  int past_average_tempature=average_tempature;
-  
-  if(average_tempature!=0)
+  DHT.read11(DHT_PIN);  //dht read
+  if(average_temperature!=0)
   {
-      average_tempature=average_tempature+tempature;
+     
+      if(abs(1-(DHT.temperature/average_temperature))>(kBias/100))
+     {
+        original_temperature=average_temperature; //record not emergence temperature
+        EmergencySend();
+        emergency_flag=true;
+     }
+      average_temperature=(average_temperature+DHT.temperature)/2;
   }
   else
   {
-    average_tempature=tempature;    
+    average_temperature=DHT.temperature;    
   }
-
-  if((average_tempature/past_average_tempature)<(1-(kBias/100))||(average_tempature/past_average_tempature)>(1-(kBias/100)))
-  {
-    EmergencySend();
-    emergency_flag=true;
-  }
-
-
 }
-
+///////////////CheckAveragetemperature
+void CheckEmergenceRecover( )
+{
+  DHT.read11(DHT_PIN);  //dht read
+   if(abs(1-(original_temperature/DHT.temperature))<(kBias/100))
+     {
+        emergency_flag=false;
+        sleep_mode=original_sleep_mode;
+     }
+  
+ 
+}
