@@ -5,7 +5,6 @@ dht DHT;
 
 //////////////////////ARDUINO CONFIG 
 const byte kLedPin = 13; 
-const int kRouterName=1;
 const int kNodeType=0;
 #include <TrueRandom.h>
 byte uuid_number[16]; // UUIDs in binary form are 16 bytes long
@@ -31,10 +30,11 @@ ZBRxResponse zbRx = ZBRxResponse();
 const int kEmergencyTime=3; //8*10=emergency mode time
 boolean emergency_flag=false;
 int emergency_count=0;
-int original_sleep_mode =1;
 float average_temperature=0;
-float kBias=20;
-float original_temperature=0;
+
+float kThreshold=20;// percentage of Threshold
+float original_temperature=0; // before emergence value
+int original_sleep_mode =1;
 
 //////////////////////MAIN FUNCTION
 void setup() {
@@ -70,9 +70,10 @@ void WakeUp()
    
    int times=0; // time   
    digitalWrite(kLedPin, HIGH);
+   
    DataSend();                    
    CheckSleepMode();
-   delay(500);
+   
    while(times<=(kWorkTime*2))   //0.1 second ;wait receive process
    { 
       times ++;
@@ -337,7 +338,7 @@ void CheckAveragetemperature( )
   if(average_temperature!=0)
   {
      
-      if(abs(1-(DHT.temperature/average_temperature))>(kBias/100))
+      if(abs(1-(DHT.temperature/average_temperature))>(kThreshold/100))
      {
         original_temperature=average_temperature; //record not emergence temperature
         EmergencySend();
@@ -354,7 +355,7 @@ void CheckAveragetemperature( )
 void CheckEmergenceRecover( )
 {
   DHT.read11(DHT_PIN);  //dht read
-   if(abs(1-(original_temperature/DHT.temperature))<(kBias/100))
+   if(abs(1-(original_temperature/DHT.temperature))<(kThreshold/100))
      {
         emergency_flag=false;
         sleep_mode=original_sleep_mode;
