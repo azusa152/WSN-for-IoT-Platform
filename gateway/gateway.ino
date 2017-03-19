@@ -1,4 +1,4 @@
- const byte kLedPin = 13; 
+const byte kLedPin = 13; 
  /* packet format
 routerName' 'sleepMode' 'workTime' 'Humidity' 'Temperature' '
 {"router": ,"sleepMode": ,"workTime": ,"Humidity", "Temperature" }
@@ -32,7 +32,7 @@ ESP8266 wifi(Serial1);
 
 ///////// ThingSpeak Settings
 #define HOST_NAME "api.thingspeak.com"
-#define KEY "EP9PGHQ1B4VXDN9H"
+#define KEY "P0NACN2HLI8U2RUN"
 #define HOST_PORT (80)
 
 
@@ -64,11 +64,14 @@ void DataReceive()
 xbee.readPacket();
   if (xbee.getResponse().isAvailable()) {
     if (xbee.getResponse().getApiId() == ZB_RX_RESPONSE) {
-        
+
+      //zigbee process  
       xbee.getResponse().getZBRxResponse(zbRx);
       long receive_address=zbRx.getRemoteAddress64().getLsb();
       String receive_data = zbRx.getData();
-      
+
+
+      // json parse
       char  json_parse[200];
       StaticJsonBuffer<200> json_buffer;
       receive_data.toCharArray(json_parse,zbRx.getDataLength());
@@ -81,12 +84,13 @@ xbee.readPacket();
       String temperature=receive_json_data["Temperature"];
       String humidity= receive_json_data["Humidity"];
 
-  
-      WifiSend(temperature,humidity);
+      //send data to server
+      WifiSend(String(router_num),temperature,humidity);
       BlinkLed(router_num); // debug
 
       memset(json_parse,0,sizeof(json_parse));
-      
+
+      // record device address 
      if(connect_device[router_num].address==NULL)  
      {
       connect_device[router_num].address=receive_address;
@@ -135,7 +139,7 @@ void ConnectToWifi()
     wifi.disableMUX();
    
 }
-void WifiSend(String temp,String humi)
+/*void WifiSend(String temp,String humi)
 {
     if(wifi.createTCP(HOST_NAME, HOST_PORT))
     {
@@ -148,6 +152,45 @@ void WifiSend(String temp,String humi)
     http += "Host: api.thingspeak.com\r\n";
     http += "Connection: close\r\n\r\n";
     wifi.send((const uint8_t*)http.c_str(), http.length());
+   
+    }
+    wifi.releaseTCP();
+   
+}*/
+void WifiSend(String router,String temp,String humi)
+{
+    if(wifi.createTCP(HOST_NAME, HOST_PORT))
+    {String http = String();
+      switch(router. toInt())
+      {
+        case 1: 
+    
+    http += "GET /update?key=";
+    http += KEY;
+    http += "&field1=" + router;
+    http += "&field2=" + temp;
+    http += "&field3=" + humi;
+    http += " HTTP/1.1\r\n";
+    http += "Host: api.thingspeak.com\r\n";
+    http += "Connection: close\r\n\r\n";
+    wifi.send((const uint8_t*)http.c_str(), http.length());
+    break;
+    case 2:
+    
+    http += "GET /update?key=";
+    http += KEY;
+    http += "&field4=" + router;
+    http += "&field5=" + temp;
+    http += "&field6=" + humi;
+    http += " HTTP/1.1\r\n";
+    http += "Host: api.thingspeak.com\r\n";
+    http += "Connection: close\r\n\r\n";
+    wifi.send((const uint8_t*)http.c_str(), http.length());
+    break;
+    default:
+    break;
+      }
+    
    
     }
     wifi.releaseTCP();

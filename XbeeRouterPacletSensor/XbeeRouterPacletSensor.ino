@@ -1,6 +1,6 @@
 ////////////arduino setting
 const byte kLedPin = 13; 
-const int kRouterName=1;
+const int kRouterName=2;
 
 //////////////////////sensor setting
 #include <dht.h>     
@@ -12,9 +12,10 @@ dht DHT;
 volatile int sleep_count = 0; // Keep track of how many sleep
 const int kWorkTime=5; //read 5 seconds
 int sleep_time=1;
-int sleep_mode =3; // sleepeMode*8senconds is pediod of sleep 
+int sleep_mode =1; // sleepeMode*8senconds is pediod of sleep 
 
 /////////////////////xbee setting
+long  cordinator_address= 0x40c8d191;
 #include <XBee.h>
 XBee xbee = XBee();
 XBeeAddress64 addr64 = XBeeAddress64(0x0013a200, 0x40c8d191);
@@ -124,7 +125,7 @@ void CheckSleepMode()
       sleep_time=3;
       break;
     case 3:
-      sleep_time=7;
+      sleep_time=450;
       break;
     default:
       break;
