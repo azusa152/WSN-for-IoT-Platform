@@ -12,6 +12,7 @@ long  cordinator_low_address= 0X00000000;
 //////////////////////XBEE CONFIG
 #include <XBee.h>
 XBee xbee = XBee();
+ZBRxResponse zbRx = ZBRxResponse();
 
 //////////////////////MAIN FUNCTION
 void setup() {
@@ -58,10 +59,16 @@ xbee.readPacket();
          
          switch (receive_data.toInt() ){
           case 1:
-                  digitalWrite(kLedPin,HIGH);
+                  BlinkLed(receive_data.toInt());
                   break;
           case 2:
-                  digitalWrite(kLedPin, LOW);   
+                  BlinkLed(receive_data.toInt()); 
+                  break;
+          case 3:
+                  BlinkLed(receive_data.toInt());
+                  break;
+          case 4:
+                  BlinkLed(receive_data.toInt());
                   break;
           default: 
                   break;

@@ -79,7 +79,6 @@ void WakeUp()
       times ++;
       DataReceive();
 
-      
       CheckAveragetemperature();            
       if(emergency_flag==true)
       {
