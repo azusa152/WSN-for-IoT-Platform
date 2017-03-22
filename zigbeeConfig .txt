@@ -33,4 +33,8 @@ END1
 13A200
 4071F744
 
+///////////////////
+用xbee.h時
 AP APIMODE要調2
+
+edison 預設為serial1
