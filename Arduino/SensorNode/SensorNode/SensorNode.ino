@@ -7,7 +7,6 @@ dht DHT;
 const byte kLedPin = 13; 
 const int kNodeType=0;
 #include <TrueRandom.h>
-byte uuid_number[16]; // UUIDs in binary form are 16 bytes long
 
 //////////////////////SLEEP CONFIG
 #include <avr/sleep.h>
@@ -39,7 +38,6 @@ int original_sleep_mode =1;
 //////////////////////MAIN FUNCTION
 void setup() {
   Serial.begin(9600); 
-  TrueRandom.uuid(uuid_number);//set uuid
   pinMode(kLedPin, OUTPUT);
 }
  
@@ -79,7 +77,7 @@ void WakeUp()
       times ++;
       DataReceive();
 
-      CheckAveragetemperature();            
+      CheckAverageTemperature();            
       if(emergency_flag==true)
       {
         digitalWrite(kLedPin, LOW);  //turn off led 
@@ -113,7 +111,7 @@ xbee.readPacket();
                   cordinator_flag=true;
                   cordinator_low_address=zbRx.getRemoteAddress64().getLsb();
                   delay(TrueRandom.random(1,1001));// avoid collision
-                  ConfirmSend();// to confirm this node to gateway
+                  ConfirmGateway();// to confirm this node to gateway
                   ResetSleep();
                   break;
           case 1:
@@ -159,18 +157,15 @@ xbee.readPacket();
 
 
 /* DATA FORMAT
-{"uuid": ,"sleep_mode": , ,"Humidity", "Temperature","Event" }
+{"sleep_mode": , ,"Humidity", "Temperature","Event" }
 */
 //////////////////////SEND ACTION
 void DataSend()
 {
    XBeeAddress64 addr64 = XBeeAddress64(cordinator_high_address, cordinator_low_address); // xbee address
-   String uuid_string=UUIDToString(uuid_number);
-   CheckAveragetemperature();
+   CheckAverageTemperature();
    
-   String trans_data="{\"UUID\":";
-   trans_data.concat(uuid_string);
-   trans_data.concat(",\"sleep_mode\":");
+   String trans_data="{\"sleep_mode\":";
    trans_data.concat(String(sleep_mode));
    trans_data.concat(",\"Humidity\":");
    trans_data.concat(String(DHT.humidity));
@@ -188,18 +183,14 @@ void DataSend()
   
 }
 /* DATA FORMAT
-{"type" ,"uuid": }
+{"type": }
 */
 //////////////////////CONFIRM GATEWAY
-void ConfirmSend()
+void ConfirmGateway()
 {
    XBeeAddress64 addr64 = XBeeAddress64(cordinator_high_address, cordinator_low_address); // xbee address
-   String uuid_string=UUIDToString(uuid_number);;
-   
    String trans_data="{\"Type\":";
    trans_data.concat(String(kNodeType));
-   trans_data.concat(",\"UUID\":");
-   trans_data.concat(uuid_string);
    trans_data.concat("} ");
     
    uint8_t trans_data_array[trans_data.length()];
@@ -210,18 +201,15 @@ void ConfirmSend()
   
 }
 /* DATA FORMAT
-{"uuid": ,"Temperature","Event" }
+{"Temperature","Event" }
 */
 //////////////////////EmergencySend
 void EmergencySend()
 {
    XBeeAddress64 addr64 = XBeeAddress64(cordinator_high_address, cordinator_low_address); // xbee address
    DHT.read11(DHT_PIN);  //dht read
-   String uuid_string=UUIDToString(uuid_number);;
-
-   String trans_data="{\"UUID\":";
-   trans_data.concat(uuid_string);
-   trans_data.concat(",\"Temperature\":");
+ 
+   String trans_data="{\"Temperature\":";
    trans_data.concat(String(DHT.temperature));
    trans_data.concat(",\"Event\":");
    trans_data.concat("1");
@@ -280,20 +268,7 @@ ISR(WDT_vect)
 sleep_count ++; 
 }
 
-//////////////////////UUID TO STRING
-String UUIDToString(byte* number) {
-  String uuid_string;
-  
-  for (int i=0; i<16; i++) {
-  int top_digit = number[i] >> 4;
-  int bottom_digit = number[i] & 0x0f;
-  uuid_string.concat(String("0123456789ABCDEF"[top_digit]));
-  uuid_string.concat(String("0123456789ABCDEF"[bottom_digit]));
-  }
-  
-  return uuid_string;
 
-}
 
 //////////////////////DEBUG
 void BlinkLed(int times)
@@ -330,8 +305,8 @@ void CheckEmergencyMode()
    
 
 }
-///////////////CheckAveragetemperature
-void CheckAveragetemperature( )
+///////////////CheckAverageTemperature
+void CheckAverageTemperature( )
 {
   DHT.read11(DHT_PIN);  //dht read
   if(average_temperature!=0)
@@ -350,7 +325,7 @@ void CheckAveragetemperature( )
     average_temperature=DHT.temperature;    
   }
 }
-///////////////CheckAveragetemperature
+///////////////CheckAverageTemperature
 void CheckEmergenceRecover( )
 {
   DHT.read11(DHT_PIN);  //dht read

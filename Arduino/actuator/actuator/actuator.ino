@@ -2,7 +2,6 @@
 const byte kLedPin = 13; 
 const int kNodeType=1;
 #include <TrueRandom.h>
-byte uuid_number[16]; // UUIDs in binary form are 16 bytes long
 
 //////////////////////GATEWAY CONFIG
 boolean cordinator_flag=false;
@@ -17,7 +16,6 @@ ZBRxResponse zbRx = ZBRxResponse();
 //////////////////////MAIN FUNCTION
 void setup() {
   Serial.begin(9600); 
-  TrueRandom.uuid(uuid_number);//set uuid
   pinMode(kLedPin, OUTPUT);
 }
  
@@ -42,7 +40,7 @@ xbee.readPacket();
                   cordinator_flag=true;
                   cordinator_low_address=zbRx.getRemoteAddress64().getLsb();
                   delay(TrueRandom.random(1,1001));// avoid collision
-                  ConfirmSend();// to confirm this node to gateway
+                  ConfirmGateway();// to confirm this node to gateway
                   break;
           case 1:
                   BlinkLed(1);
@@ -86,15 +84,12 @@ xbee.readPacket();
 {"type" ,"uuid": }
 */
 //////////////////////CONFIRM GATEWAY
-void ConfirmSend()
+void ConfirmGateway()
 {
    XBeeAddress64 addr64 = XBeeAddress64(cordinator_high_address, cordinator_low_address); // xbee address
-   String uuid_string=UUIDToString(uuid_number);;
    
    String trans_data="{\"Type\":";
    trans_data.concat(String(kNodeType));
-   trans_data.concat(",\"UUID\":");
-   trans_data.concat(uuid_string);
    trans_data.concat("} ");
     
    uint8_t trans_data_array[trans_data.length()];
@@ -106,20 +101,6 @@ void ConfirmSend()
 }
 
 
-//////////////////////UUID TO STRING
-String UUIDToString(byte* number) {
-  String uuid_string;
-  
-  for (int i=0; i<16; i++) {
-  int top_digit = number[i] >> 4;
-  int bottom_digit = number[i] & 0x0f;
-  uuid_string.concat(String("0123456789ABCDEF"[top_digit]));
-  uuid_string.concat(String("0123456789ABCDEF"[bottom_digit]));
-  }
-  
-  return uuid_string;
-
-}
 
 //////////////////////DEBUG
 void BlinkLed(int times)
