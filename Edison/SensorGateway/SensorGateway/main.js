@@ -1,3 +1,4 @@
+/////////////////////////////////xbee setting
 var util = require('util');
 var SerialPort = require('serialport');
 var xbee_api = require('xbee-api');
@@ -5,10 +6,12 @@ var C = xbee_api.constants;
 var xbeeAPI = new xbee_api.XBeeAPI({
     api_mode: 2
 });
+
 var serialport = new SerialPort("/dev/ttyMFD1", {
     baudrate: 9600,
     parser: xbeeAPI.rawParser()
 });
+
 var frame_obj = { 
         type: 0x10, 
         id: 0x01, 
@@ -17,12 +20,18 @@ var frame_obj = {
         options: 0x00, 
         data: "0" 
     };  
+
+
+
+/////////////////////////////////coap setting
 const coap  = require('coap')
   , server = coap.createServer({
-    host: '192.168.1.129',
+    host: '192.168.1.128',
   }), port = 5683
 
 
+
+/////////////////////////////////coap server
 server.on('request', function(msg, res) {
     var path =msg.url;       //將收到的位置(path)拿出來比對 
     frame_obj.data="0";
@@ -45,6 +54,7 @@ server.on('request', function(msg, res) {
            
             frame_obj.data="3";
             serialport.write(xbeeAPI.buildFrame(frame_obj));
+            console.log(path);
             
             break;
         case '/light_OFF':
@@ -57,15 +67,28 @@ server.on('request', function(msg, res) {
     
     res.end(path) //回傳給client端
 })
-serialport.on('data', function (data) {
-    console.log('data received: ' + data);
-});
-
-// All frames parsed by the XBee will be emitted here
-xbeeAPI.on("frame_object", function (frame) {
-    console.log(">>", frame);
-});
 server.listen(5683, function() {
 
   console.log('Server is listening')
 })
+
+
+/////////////////////////////////xbee action
+// All frames parsed by the XBee will be emitted here
+xbeeAPI.on("frame_object", function (frame) {
+    
+
+    if(frame.type==139) // transmit
+        {
+
+        }
+    else if(frame.type==144)//receive
+        {
+
+            console.log(frame.data.toString('ascii'));
+            console.log(frame.remote64);
+            
+        }
+});
+
+

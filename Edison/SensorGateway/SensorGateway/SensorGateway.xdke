@@ -1,0 +1,74 @@
+{
+  "project": {
+    "projectSettingsVersion": "3.0.0",
+    "currentBuildConfiguration": null,
+    "projectFiles": {},
+    "projectDirectories": {}
+  },
+  "editorTab": {
+    "currentEditorMode": 0
+  },
+  "iot-tab": {
+    "fileStatus": {
+      ".gitignore": {
+        "previousModTime": 1490686549901,
+        "modified": 1490686549901,
+        "seen": true,
+        "name": ".gitignore"
+      },
+      "icon.png": {
+        "previousModTime": 1490686549901,
+        "modified": 1490686549901,
+        "seen": true,
+        "name": "icon.png"
+      },
+      "LICENSE.md": {
+        "previousModTime": 1490686549902,
+        "modified": 1490686549902,
+        "seen": true,
+        "name": "LICENSE.md"
+      },
+      "main.js": {
+        "previousModTime": 1490873275377,
+        "modified": 1490873275377,
+        "seen": true,
+        "name": "main.js"
+      },
+      "package.json": {
+        "previousModTime": 1490686549903,
+        "modified": 1490686549903,
+        "seen": true,
+        "name": "package.json"
+      },
+      "README.md": {
+        "previousModTime": 1490686549902,
+        "modified": 1490686549902,
+        "seen": true,
+        "name": "README.md"
+      },
+      "SensorGateway.xdk": {
+        "previousModTime": 1490686550039,
+        "modified": 1490686550039,
+        "seen": true,
+        "name": "SensorGateway.xdk"
+      },
+      "SensorGateway.xdke": {
+        "previousModTime": 1490873125229,
+        "modified": 1490873125229,
+        "seen": true,
+        "name": "SensorGateway.xdke"
+      },
+      "xdk/project-info.json": {
+        "previousModTime": 1490686549999,
+        "modified": 1490686549999,
+        "seen": true,
+        "name": "xdk/project-info.json"
+      }
+    },
+    "boardFileStatus": {
+      "main.js": {
+        "previousModTime": 1490873285192
+      }
+    }
+  }
+}
