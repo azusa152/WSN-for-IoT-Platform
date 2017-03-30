@@ -20,7 +20,10 @@ var frame_obj = {
         options: 0x00, 
         data: "0" 
     };  
-
+var azusa=[];
+function NodeStruct(address) {
+  this.address = address;
+}
 
 
 /////////////////////////////////coap setting
@@ -84,9 +87,14 @@ xbeeAPI.on("frame_object", function (frame) {
         }
     else if(frame.type==144)//receive
         {
+            console.log(">>");
 
             console.log(frame.data.toString('ascii'));
-            console.log(frame.remote64);
+            azusa[0]=new NodeStruct(frame.remote64.toString());
+            console.log(azusa[0].address);
+            
+        
+           
             
         }
 });
