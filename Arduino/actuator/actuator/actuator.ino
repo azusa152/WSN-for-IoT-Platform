@@ -1,6 +1,6 @@
 //////////////////////ARDUINO CONFIG 
 const byte kLedPin = 13; 
-const int kNodeType=1;
+const int kNodeType=101;
 #include <TrueRandom.h>
 
 //////////////////////GATEWAY CONFIG
@@ -81,7 +81,7 @@ xbee.readPacket();
 
 
 /* DATA FORMAT
-{"type" ,"uuid": }
+{"Type": ,"E"=0}
 */
 //////////////////////CONFIRM GATEWAY
 void ConfirmGateway()
@@ -90,6 +90,8 @@ void ConfirmGateway()
    
    String trans_data="{\"Type\":";
    trans_data.concat(String(kNodeType));
+   trans_data.concat(",\"E\":");
+   trans_data.concat("0");
    trans_data.concat("} ");
     
    uint8_t trans_data_array[trans_data.length()];

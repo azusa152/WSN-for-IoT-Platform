@@ -157,7 +157,7 @@ xbee.readPacket();
 
 
 /* DATA FORMAT
-{"sleep_mode": , ,"Humidity", "Temperature","Event" }
+{"SM": , ,"H", "T","E"=1 }
 */
 //////////////////////SEND ACTION
 void DataSend()
@@ -165,13 +165,33 @@ void DataSend()
    XBeeAddress64 addr64 = XBeeAddress64(cordinator_high_address, cordinator_low_address); // xbee address
    CheckAverageTemperature();
    
-   String trans_data="{\"sleep_mode\":";
+   String trans_data="{\"SM\":";
    trans_data.concat(String(sleep_mode));
-   trans_data.concat(",\"Humidity\":");
+   trans_data.concat(",\"H\":");
    trans_data.concat(String(DHT.humidity));
-   trans_data.concat(",\"Temperature\":");
+   trans_data.concat(",\"T\":");
    trans_data.concat(String(DHT.temperature));
-   trans_data.concat(",\"Event\":");
+   trans_data.concat(",\"E\":");
+   trans_data.concat("1");
+   trans_data.concat("} ");
+    
+   uint8_t trans_data_array[trans_data.length()];
+   trans_data.toCharArray(trans_data_array, trans_data.length());
+   ZBTxRequest zbTx = ZBTxRequest(addr64, trans_data_array, sizeof(trans_data_array));
+   xbee.send(zbTx);
+   delay(100);
+  
+}
+/* DATA FORMAT
+{"Type": ,"E"=0}
+*/
+//////////////////////CONFIRM GATEWAY
+void ConfirmGateway()
+{
+   XBeeAddress64 addr64 = XBeeAddress64(cordinator_high_address, cordinator_low_address); // xbee address
+   String trans_data="{\"Type\":";
+   trans_data.concat(String(kNodeType));
+    trans_data.concat(",\"E\":");
    trans_data.concat("0");
    trans_data.concat("} ");
     
@@ -183,25 +203,7 @@ void DataSend()
   
 }
 /* DATA FORMAT
-{"type": }
-*/
-//////////////////////CONFIRM GATEWAY
-void ConfirmGateway()
-{
-   XBeeAddress64 addr64 = XBeeAddress64(cordinator_high_address, cordinator_low_address); // xbee address
-   String trans_data="{\"Type\":";
-   trans_data.concat(String(kNodeType));
-   trans_data.concat("} ");
-    
-   uint8_t trans_data_array[trans_data.length()];
-   trans_data.toCharArray(trans_data_array, trans_data.length());
-   ZBTxRequest zbTx = ZBTxRequest(addr64, trans_data_array, sizeof(trans_data_array));
-   xbee.send(zbTx);
-   delay(100);
-  
-}
-/* DATA FORMAT
-{"Temperature","Event" }
+{"Temperature","Event"=2 }
 */
 //////////////////////EmergencySend
 void EmergencySend()
@@ -212,7 +214,7 @@ void EmergencySend()
    String trans_data="{\"Temperature\":";
    trans_data.concat(String(DHT.temperature));
    trans_data.concat(",\"Event\":");
-   trans_data.concat("1");
+   trans_data.concat("2");
    trans_data.concat("} ");
   
    uint8_t trans_data_array[trans_data.length()];

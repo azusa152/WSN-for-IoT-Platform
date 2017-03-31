@@ -1,8 +1,27 @@
+/////////////////////////////////serial port bug fix
+"use strict" ;
+var cfg = require("./utl/cfg-app-platform.js")() ;   
+cfg.identify() ;     
+if( !cfg.test() ) {
+    process.exit(1) ;
+}
+
+if( !cfg.init() ) {
+    process.exit(2) ;
+}
+
+cfg.io = new cfg.mraa.Uart(cfg.ioPin) ;         // construct our I/O object
+cfg.ioPath = cfg.io.getDevicePath() ;   
+cfg.io.setBaudRate(9600) ;
+cfg.io.setMode(8, cfg.mraa.UART_PARITY_NONE, 1) ;
+cfg.io.setFlowcontrol(false, false) ;
+cfg.io.setTimeout(0, 0, 0) ;    
+
 /////////////////////////////////xbee setting
 var util = require('util');
 var SerialPort = require('serialport');
 var xbee_api = require('xbee-api');
-var C = xbee_api.constants;
+
 var xbeeAPI = new xbee_api.XBeeAPI({
     api_mode: 2
 });
@@ -15,16 +34,40 @@ var serialport = new SerialPort("/dev/ttyMFD1", {
 var frame_obj = { 
         type: 0x10, 
         id: 0x01, 
-        destination64: "000000000000ffff",
+        destination64: '000000000000ffff',
         broadcastRadius: 0x00,
         options: 0x00, 
-        data: "0" 
+        data: '0'
     };  
-var azusa=[];
-function NodeStruct(address) {
+
+/////////////////////////////////sensor setting
+var sensorNode=[];
+var actuator=[];
+
+function NodeStruct(address,type) {
   this.address = address;
+  this.type=type;
 }
 
+
+function checkSensorNode(address,type){
+     for(var i=0;i<sensorNode.length;i++){
+         if(sensorNode[i].address===address){
+             return;
+         }
+     }
+     sensorNode.push(new NodeStruct(address,type));
+    
+}
+function checkActuator(address,type){
+     for(var i=0;i<sensorNode.length;i++){
+         if(actuator[i].address===address){
+             return;
+         }
+     }
+     actuator.push(new NodeStruct(address,type));
+    
+}
 
 /////////////////////////////////coap setting
 const coap  = require('coap')
@@ -78,21 +121,61 @@ server.listen(5683, function() {
 
 /////////////////////////////////xbee action
 // All frames parsed by the XBee will be emitted here
-xbeeAPI.on("frame_object", function (frame) {
+xbeeAPI.on('frame_object', function (frame) {
     
 
-    if(frame.type==139) // transmit
-        {
+    if(frame.type===139) {  // transmit
 
         }
-    else if(frame.type==144)//receive
-        {
-            console.log(">>");
+    
+    
+    else if(frame.type===144){ //receive
+        /*  type: 144,
+            remote64: '0013a20040c8d185',
+            remote16: '11d1',
+            receiveOptions: 1,
+            data:*/
 
+            console.log('>>');
             console.log(frame.data.toString('ascii'));
-            azusa[0]=new NodeStruct(frame.remote64.toString());
-            console.log(azusa[0].address);
-            
+            //delete the end null data of xbee receive data
+        
+            var deleteNull = /\0/g;
+            var receiveRawData = frame.data.toString().replace(deleteNull, "");   
+            //把資料處理成json
+            var receiveData = JSON.parse(receiveRawData);
+            //把MAC位置加入json
+            receiveData.NewField='address';
+            receiveData.address=frame.remote64;
+        
+    
+            //event 0:confirm gate way ; 1:normal data send ; 2:emergency send
+            switch (receiveData.E) { 
+                case 0:
+                    console.log('receive confirm gateway');
+                    
+                    //type <100:sensor ; >100 actuator
+                    if(receiveData.Type<100){
+                        console.log('sensor node');
+                        checkSensorNode(frame.remote64,receiveData.Type);
+                       
+                    }
+                    else if (receiveData.Type>100){
+                        console.log('actuator');
+                        checkActuator(frame.remote64,receiveData.Type);
+                    }
+                        
+                    break;
+                
+                    
+                case 1:
+                    break;
+                    
+                case 2:
+                    break;
+                    
+
+            }
         
            
             
