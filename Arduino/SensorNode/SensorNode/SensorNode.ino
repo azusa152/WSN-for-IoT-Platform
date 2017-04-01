@@ -1,3 +1,6 @@
+/////////////////json setting
+#include <ArduinoJson.h>
+
 //////////////////////SENSOR CONFIG 
 #include <dht.h>     
 #define DHT_PIN A0 
@@ -102,9 +105,14 @@ xbee.readPacket();
     if (xbee.getResponse().getApiId() == ZB_RX_RESPONSE) {
       xbee.getResponse().getZBRxResponse(zbRx);
       String receive_data = zbRx.getData();
+      //json convert
+      StaticJsonBuffer<200> json_buffer;
+      JsonObject& receive_json_data = json_buffer.parseObject(receive_data.c_str());
+      int command=receive_json_data["Command"];
+ 
       if(cordinator_flag!=true)  //if first time detected gateway
       {
-        switch (receive_data.toInt() ){
+        switch (command){
           case 0:
                   BlinkLed(3);
                   
@@ -117,9 +125,7 @@ xbee.readPacket();
           case 1:
                   BlinkLed(1);
                   break;
-          case 2:
-                  BlinkLed(2);
-                  break;
+          
           default: 
                   break;
           
@@ -127,7 +133,7 @@ xbee.readPacket();
       }
       else if (zbRx.getRemoteAddress64().getLsb() ==cordinator_low_address) {    
          
-         switch (receive_data.toInt() ){
+         switch (command){
           case 0:
                   BlinkLed(5);
                   break;
