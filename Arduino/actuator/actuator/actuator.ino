@@ -44,17 +44,11 @@ xbee.readPacket();
       {
         switch (command){
           case 0:
-                  BlinkLed(3);
+                  BlinkLed(1);
                   cordinator_flag=true;
                   cordinator_low_address=zbRx.getRemoteAddress64().getLsb();
-                  delay(TrueRandom.random(1,1001));// avoid collision
+                  delay(TrueRandom.random(1,500));// avoid collision
                   ConfirmGateway();// to confirm this node to gateway
-                  break;
-          case 1:
-                  BlinkLed(1);
-                  break;
-          case 2:
-                  BlinkLed(2);
                   break;
           default: 
                   break;
@@ -120,9 +114,9 @@ void BlinkLed(int times)
   for(int i=1;i<=times;i++)
   {
          digitalWrite(kLedPin,HIGH);
-         delay(150);                      
+         delay(100);                      
          digitalWrite(kLedPin, LOW);   
-         delay(150);  
+         delay(100);  
   }
 }
 

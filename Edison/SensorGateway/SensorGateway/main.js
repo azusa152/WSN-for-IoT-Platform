@@ -43,44 +43,54 @@ var frame_obj = {
 /////////////////////////////////sensor setting
 var sensorNode=[];
 var actuator=[];
-var sensorWorkTime=3; //sensor 醒來使work 3秒
+var sensorWorkTime=5; //sensor 醒來使work 5秒
 
+// sensor 及 actuator 處存格式
 function NodeStruct(address,type) {
-  this.address = address;
-  this.type=type;
+  this.UUID = address;
+  this.TYPE=type;
   this.wakeup=false; 
 }
 
 // check node is exsist
-function checkSensorNode(address,type){
-     for(var i=0;i<sensorNode.length;i++){
-         if(sensorNode[i].address===address){
-             return;
-         }
-     }
-     sensorNode.push(new NodeStruct(address,type));
+function checkNode(address,type){
     
-}
-function checkActuator(address,type){
-     for(var i=0;i<actuator.length;i++){
-         if(actuator[i].address===address){
+    //type <100:sensor ; >100 actuator
+     if(type<100){
+         for(var i=0;i<sensorNode.length;i++){
+         if(sensorNode[i].UUID===address){
              return;
+            }
          }
+         console.log('>> sensor register ');
+         sensorNode.push(new NodeStruct(address,type));
      }
-     actuator.push(new NodeStruct(address,type));
     
+     else{
+         for(var i=0;i<actuator.length;i++){
+         if(actuator[i].UUID===address){
+             return;
+            }
+         }
+         console.log('>> actuator register ');
+         actuator.push(new NodeStruct(address,type));
+         
+     }
+
 }
 
-//find which node send data
+
+//find which node send data，return node number ,if not found return -1 
 function findNode(address){
     for(var i=0;i<sensorNode.length;i++){
-         if(sensorNode[i].address===address){
+         if(sensorNode[i].UUID===address){
              return i;
          }
      }
     return -1;
     
 }
+
 // data to send
 var dataToSend=[];
 var discoverNode="";
@@ -90,22 +100,23 @@ function toDiscoverNode(){
 
     for(var i=0;i<sensorNode.length;i++){
         if(discoverNode===""){
-            discoverNode=JSON.stringify(sensorNode[0]);
+            discoverNode=JSON.stringify(sensorNode[i]);
         }
         else{
-            discoverNode=discoverNode+","+JSON.stringify(sensorNode[0]);
+            discoverNode=discoverNode+","+JSON.stringify(sensorNode[i]);
         }
         
     }
     for(var i=0;i<actuator.length;i++){
         if(discoverNode===""){
-            discoverNode=JSON.stringify(actuator[0]);
+            discoverNode=JSON.stringify(actuator[i]);
         }
         else{
-            discoverNode=discoverNode+","+JSON.stringify(actuator[0]);
+            discoverNode=discoverNode+","+JSON.stringify(actuator[i]);
         }
     }
     
+    console.log('>>'+discoverNode);
 }
 
 /////////////////////////////////emergency setting
@@ -131,9 +142,10 @@ server.on('request', function(msg, res) {
             frame_obj.data='{\"Command\":0}';
             frame_obj.destination64='000000000000ffff'; //broadcast
             serialport.write(xbeeAPI.buildFrame(frame_obj));
-            var waitsleep=setTimeout(toDiscoverNode(),1000);
             
-            console.log(discoverNode);
+            setTimeout(toDiscoverNode,1000);
+            
+            
             break;
             
         case '/TV_ON':
@@ -182,77 +194,71 @@ xbeeAPI.on('frame_object', function (frame) {
     
     
     else if(frame.type===144){ //receive
-        /*  type: 144,
+            /*  frame format
+            type: 144,
             remote64: '0013a20040c8d185',
             remote16: '11d1',
             receiveOptions: 1,
-            data:*/
-
-            console.log('>>');
-            console.log(frame.data.toString('ascii'));
-            //delete the end null data of xbee receive data
+            data:
+            
+            receiveData format
+            { SM: 1, H: 17, T: 24, E: 1, UUID: '0013a20040c8d185' }*/
+     
+            
+            console.log('>'+frame.data.toString('ascii'));
         
+            //delete the end null data of xbee receive data
             var deleteNull = /\0/g;
             var receiveRawData = frame.data.toString().replace(deleteNull, "");   
+        
             //把資料處理成json
             var receiveData = JSON.parse(receiveRawData);
-            //把MAC位置加入json
-            receiveData.NewField='address';
-            receiveData.address=frame.remote64;
         
+            //把MAC位置加入json
+            receiveData.UUID=frame.remote64;
+            
     
             //event 0:confirm gate way ; 1:normal data send ; 2:emergency send
             switch (receiveData.E) { 
+                    
                 //receive confirm gateway
                 case 0:
-                    console.log('>> receive confirm gateway');
-                    
-                    //type <100:sensor ; >100 actuator
-                    if(receiveData.Type<100){
-                        console.log('>>> sensor node');
-                        
-                        checkSensorNode(frame.remote64,receiveData.Type);
-                       
-                    }
-                    else if (receiveData.Type>100){
-                        console.log('>>> actuator');
-                        checkActuator(frame.remote64,receiveData.Type);
-                    }
-                   
+                    checkNode(frame.remote64,receiveData.Type);
                     break;
                 
-                    
+                //receive sensor data
                 case 1:
-                    var sensornodeNumber=findNode(frame.remote64);
+                    var sensorNodeNumber=findNode(frame.remote64);
                     
-                    if(sensornodeNumber===-1){     //not found
-                        console.log('>>> not registered sensor');
+                    if(sensorNodeNumber===-1){     //not found
+                        console.log('>> fail ,not registered ');
                         
                     }
                     else{
-                        frame_obj.data='{\"Command\":0}';
-                        frame_obj.destination64=frame.remote64;
-                        
-                        serialport.write(xbeeAPI.buildFrame(frame_obj));
                         // node 醒來 ，X秒後睡覺
-                        sensorNode[sensornodeNumber].wakeup=true;
-                        var waitsleep=setTimeout(function(){sensorNode[sensornodeNumber].wakeup=false},sensorWorkTime*1000);
+                        sensorNode[sensorNodeNumber].wakeup=true;
+                        setTimeout(function(){sensorNode[sensorNodeNumber].wakeup=false},sensorWorkTime*1000);
                         
-                        console.log('>>> get data');
+                        console.log('>> receive sensor data');
+                        
+                        
+                        // put data to payload
                         dataToSend.push(receiveData);
+                        console.log(dataToSend);
                     }
                     
                     break;
-                    
+                 
+                //receive emergency
                 case 2:
-                    var sensornodeNumber=findNode(frame.remote64);
+                    var sensorNodeNumber=findNode(frame.remote64);
                     
-                    if(sensornodeNumber===-1){     //not found
-                        console.log('>>> not registered sensor');
+                    if(sensorNodeNumber===-1){     //not found
+                        console.log('>> fail ,not registered ');
                         
                     }
                     else{
-                        console.log('>>> emergence mode');
+                        console.log('>> receive emergence');
                         
                         emergencyFlag=true;
                         dataToSend.push(receiveData);
