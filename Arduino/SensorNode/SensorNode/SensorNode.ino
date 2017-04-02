@@ -31,6 +31,7 @@ ZBRxResponse zbRx = ZBRxResponse();
 //////////////////////EMERGENCY CONFIG
 const int kEmergencyTime=3; //8*10=emergency mode time
 boolean emergency_flag=false;
+boolean recover_flag=false;
 int emergency_count=0;
 float average_temperature=0;
 
@@ -64,24 +65,38 @@ void loop()
 //////////////////////WAKEUP PROCESS
 void WakeUp()
 {
-   
+   //if in emergency mode,send emergence data
    CheckEmergencyMode();
-   if(emergency_flag==true)
-   return;
+   // in emergency and not recovered then return
+   if(emergency_flag==true&&recover_flag==false)
+   {
+      return;
+   }
+   
    
    int times=0; // time   
    digitalWrite(kLedPin, HIGH);
-   
-   DataSend();                    
+
+   //recovered but not receive stop emergence  
+   if(emergency_flag==true&&recover_flag==true)
+   {
+      RecoverSend();
+   }
+   // in normal mode
+   else
+   {
+      DataSend();  
+   }
+                     
    CheckSleepMode();
    
    while(times<=(kWorkTime*2))   //0.1 second ;wait receive process
    { 
       times ++;
       DataReceive();
-
+      // check temperature 
       CheckAverageTemperature();            
-      if(emergency_flag==true)
+      if(emergency_flag==true&&recover_flag==false)
       {
         digitalWrite(kLedPin, LOW);  //turn off led 
         ResetSleep();
@@ -129,10 +144,10 @@ xbee.readPacket();
       else if (zbRx.getRemoteAddress64().getLsb() ==cordinator_low_address) {    
          
          switch (command){
-          
-          case 1:
+          //receive start emergence command
+          case 100:
                   BlinkLed(1);
-                  if(emergency_flag==false)        
+                  if(emergency_flag==false&&recover_flag==false)        
                   {
                    emergency_flag=true;
                    original_sleep_mode=sleep_mode;
@@ -140,7 +155,10 @@ xbee.readPacket();
                    EmergencySend();
                   }
                   break;
-          case 2:
+          //receive stop emergence command
+          case 200:
+                  emergency_flag=false;
+                  recover_flag=false;
                   BlinkLed(2);
                   break;
           default: 
@@ -210,10 +228,29 @@ void EmergencySend()
    XBeeAddress64 addr64 = XBeeAddress64(cordinator_high_address, cordinator_low_address); // xbee address
    DHT.read11(DHT_PIN);  //dht read
  
-   String trans_data="{\"Temperature\":";
+   String trans_data="{\"T\":";
    trans_data.concat(String(DHT.temperature));
-   trans_data.concat(",\"Event\":");
+   trans_data.concat(",\"E\":");
    trans_data.concat("2");
+   trans_data.concat("} ");
+  
+   uint8_t trans_data_array[trans_data.length()];
+   trans_data.toCharArray(trans_data_array, trans_data.length());
+   ZBTxRequest zbTx = ZBTxRequest(addr64, trans_data_array, sizeof(trans_data_array));
+   xbee.send(zbTx);
+   delay(100);
+  
+}
+//////////////////////RecoverSend
+void RecoverSend()
+{
+   XBeeAddress64 addr64 = XBeeAddress64(cordinator_high_address, cordinator_low_address); // xbee address
+   DHT.read11(DHT_PIN);  //dht read
+ 
+   String trans_data="{\"T\":";
+   trans_data.concat(String(DHT.temperature));
+   trans_data.concat(",\"E\":");
+   trans_data.concat("3");
    trans_data.concat("} ");
   
    uint8_t trans_data_array[trans_data.length()];
@@ -291,7 +328,7 @@ void ResetSleep()
 //////////////////////EMERGENCY MODE
 void CheckEmergencyMode()
 {
-   if(emergency_flag==true)
+   if(emergency_flag==true&&recover_flag==false)
    {
     emergency_count++;
     EmergencySend();
@@ -317,6 +354,7 @@ void CheckAverageTemperature( )
      {
         original_temperature=average_temperature; //record not emergence temperature
         EmergencySend();
+        recover_flag=false;
         emergency_flag=true;
      }
       average_temperature=(average_temperature+DHT.temperature)/2;
@@ -332,8 +370,9 @@ void CheckEmergenceRecover( )
   DHT.read11(DHT_PIN);  //dht read
    if(abs(1-(original_temperature/DHT.temperature))<(kThreshold/100))
      {
-        emergency_flag=false;
+        recover_flag=true;
         sleep_mode=original_sleep_mode;
+        RecoverSend();
      }
   
  

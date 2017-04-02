@@ -121,6 +121,8 @@ function toDiscoverNode(){
 
 /////////////////////////////////emergency setting
 var emergencyFlag=Boolean(false);
+var recoverFlag=Boolean(false);
+
 
 
 /////////////////////////////////coap setting
@@ -239,9 +241,17 @@ xbeeAPI.on('frame_object', function (frame) {
                         sensorNode[sensorNodeNumber].wakeup=true;
                         setTimeout(function(){sensorNode[sensorNodeNumber].wakeup=false},sensorWorkTime*1000);
                         
+                        //record sleep mode;
+                        sensorNode[sensorNodeNumber].SM=receiveData.SM;
+                        
                         console.log('>> receive sensor data');
                         
-                        
+                        //emergence mode
+                        if(emergencyFlag===true){
+                            frame_obj.data='{\"Command\":100}';
+                            frame_obj.destination64=frame.remote64; //broadcast
+                            serialport.write(xbeeAPI.buildFrame(frame_obj));
+                        }
                         // put data to payload
                         dataToSend.push(receiveData);
                         console.log(dataToSend);
@@ -260,7 +270,37 @@ xbeeAPI.on('frame_object', function (frame) {
                     else{
                         console.log('>> receive emergence');
                         
+                        //若沒廣播過，先廣播一次警急模式
+                        if(emergencyFlag===false){
+                            frame_obj.data='{\"Command\":100}';
+                            frame_obj.destination64='000000000000ffff'; //broadcast
+                            serialport.write(xbeeAPI.buildFrame(frame_obj));
+                        }
+                        
                         emergencyFlag=true;
+                        dataToSend.push(receiveData);
+                    }
+                    
+                   
+                    
+                    break;
+                    
+                case 3:
+                    var sensorNodeNumber=findNode(frame.remote64);
+                    
+                    if(sensorNodeNumber===-1){     //not found
+                        console.log('>> fail ,not registered ');
+                        
+                    }
+                    else{
+                        console.log('>> receive recover');
+                        
+                        emergencyFlag=false;
+                        recoverFlag=true;
+                        frame_obj.data='{\"Command\":200}';
+                        frame_obj.destination64='000000000000ffff'; //broadcast
+                        serialport.write(xbeeAPI.buildFrame(frame_obj));
+                        
                         dataToSend.push(receiveData);
                     }
                     
