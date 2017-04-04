@@ -1,0 +1,9 @@
+/*          frame format
+            type: 144,
+            remote64: '0013a20040c8d185',
+            remote16: '11d1',
+            receiveOptions: 1,
+            data:
+            
+            receiveData format
+            { SM: 1, H: 17, T: 24, E: 1, UUID: '0013a20040c8d185' }*/

@@ -1,18 +1,19 @@
-/////////////////json setting
+//////////////////////library
+#include <dht.h>   
 #include <ArduinoJson.h>
+#include <TrueRandom.h>
+#include <avr/sleep.h>
+#include <XBee.h>
 
 //////////////////////SENSOR CONFIG 
-#include <dht.h>     
 #define DHT_PIN A0 
 dht DHT;
 
 //////////////////////ARDUINO CONFIG 
 const byte kLedPin = 13; 
 const int kNodeType=0;
-#include <TrueRandom.h>
 
 //////////////////////SLEEP CONFIG
-#include <avr/sleep.h>
 volatile int sleep_count = 0; // Keep track of how many sleep done
 const int kWorkTime=5; //work 5 seconds
 int sleep_time=1;  // sleep_time*8seconds is pediod of sleep 
@@ -24,7 +25,6 @@ const long  cordinator_high_address= 0x0013a200;
 long  cordinator_low_address= 0X00000000;
 
 //////////////////////XBEE CONFIG
-#include <XBee.h>
 XBee xbee = XBee();
 ZBRxResponse zbRx = ZBRxResponse();
 
@@ -372,7 +372,7 @@ void CheckEmergenceRecover( )
      {
         recover_flag=true;
         sleep_mode=original_sleep_mode;
-        RecoverSend();
+       
      }
   
  

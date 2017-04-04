@@ -1,6 +1,6 @@
 {
-  "name": "xdk-iot-blank-template",
-  "description": "Intel® XDK IoT Blank Node.js Template",
+  "name": "sensor-gateway",
+  "description": "wise_lab project",
   "version": "0.0.0",
   "main": "main.js",
   "engines": {

@@ -1,9 +1,11 @@
-/////////////////json setting
+/////////////////library
 #include <ArduinoJson.h>
+#include <TrueRandom.h>
+#include <XBee.h>
+
 //////////////////////ARDUINO CONFIG 
 const byte kLedPin = 13; 
 const int kNodeType=101;
-#include <TrueRandom.h>
 
 //////////////////////GATEWAY CONFIG
 boolean cordinator_flag=false;
@@ -11,7 +13,6 @@ const long  cordinator_high_address= 0x0013a200;
 long  cordinator_low_address= 0X00000000;
 
 //////////////////////XBEE CONFIG
-#include <XBee.h>
 XBee xbee = XBee();
 ZBRxResponse zbRx = ZBRxResponse();
 
