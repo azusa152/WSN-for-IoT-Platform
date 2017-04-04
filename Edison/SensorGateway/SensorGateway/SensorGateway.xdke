@@ -29,20 +29,20 @@
         "name": "LICENSE.md"
       },
       "main.js": {
-        "previousModTime": 1491123456641,
-        "modified": 1491123456641,
+        "previousModTime": 1491290727217,
+        "modified": 1491290727217,
         "seen": true,
         "name": "main.js"
       },
       "package.json": {
-        "previousModTime": 1490686549903,
-        "modified": 1490686549903,
+        "previousModTime": 1491282523673,
+        "modified": 1491282523673,
         "seen": true,
         "name": "package.json"
       },
       "README.md": {
-        "previousModTime": 1490686549902,
-        "modified": 1490686549902,
+        "previousModTime": 1491282864261,
+        "modified": 1491282864261,
         "seen": true,
         "name": "README.md"
       },
@@ -53,8 +53,8 @@
         "name": "SensorGateway.xdk"
       },
       "SensorGateway.xdke": {
-        "previousModTime": 1491122926309,
-        "modified": 1491122926309,
+        "previousModTime": 1491290728615,
+        "modified": 1491290728615,
         "seen": true,
         "name": "SensorGateway.xdke"
       },
@@ -63,12 +63,32 @@
         "modified": 1490686549999,
         "seen": true,
         "name": "xdk/project-info.json"
+      },
+      "openSerial.js": {
+        "previousModTime": 1491288575226,
+        "modified": 1491288575226,
+        "seen": true,
+        "name": "openSerial.js"
+      },
+      "nodeFunction.js": {
+        "previousModTime": 1491289151124,
+        "modified": 1491289151124,
+        "seen": true,
+        "name": "nodeFunction.js"
+      },
+      "dataformat": {
+        "previousModTime": 1491287754189,
+        "modified": 1491287754189,
+        "seen": true,
+        "name": "dataformat"
+      },
+      "frameProcess.js": {
+        "previousModTime": 1491288265562,
+        "modified": 1491288265562,
+        "seen": true,
+        "name": "frameProcess.js"
       }
     },
-    "boardFileStatus": {
-      "main.js": {
-        "previousModTime": 1491123458197
-      }
-    }
+    "boardFileStatus": {}
   }
 }

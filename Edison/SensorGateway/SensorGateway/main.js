@@ -1,27 +1,15 @@
-/////////////////////////////////serial port bug fix
-"use strict" ;
-var cfg = require("./utl/cfg-app-platform.js")() ;   
-//cfg.identify() ;     
-if( !cfg.test() ) {
-    process.exit(1) ;
-}
-
-if( !cfg.init() ) {
-    process.exit(2) ;
-}
-
-cfg.io = new cfg.mraa.Uart(cfg.ioPin) ;         // construct our I/O object
-cfg.ioPath = cfg.io.getDevicePath() ;   
-cfg.io.setBaudRate(9600) ;
-cfg.io.setMode(8, cfg.mraa.UART_PARITY_NONE, 1) ;
-cfg.io.setFlowcontrol(false, false) ;
-cfg.io.setTimeout(0, 0, 0) ;    
-
-/////////////////////////////////xbee setting
+////////////////////////////////modules
+const openSerialPPort=require('./openSerial');
 var util = require('util');
 var SerialPort = require('serialport');
 var xbee_api = require('xbee-api');
+const nodeFunction=require('./nodeFunction');
+const frameProcess=require('./frameProcess');
 
+/////////////////////////////////serial port bug fix
+openSerialPPort.openMySerialPort();
+
+/////////////////////////////////xbee setting
 var xbeeAPI = new xbee_api.XBeeAPI({
     api_mode: 2
 });
@@ -40,84 +28,17 @@ var frame_obj = {
         data: '0'
     };  
 
+
 /////////////////////////////////sensor setting
+
 var sensorNode=[];
 var actuator=[];
+
+var dataToSend=[];
+var connectedNode='';
 var sensorWorkTime=5; //sensor 醒來使work 5秒
 
-// sensor 及 actuator 處存格式
-function NodeStruct(address,type) {
-  this.UUID = address;
-  this.TYPE=type;
-  this.wakeup=false; 
-}
 
-// check node is exsist
-function checkNode(address,type){
-    
-    //type <100:sensor ; >100 actuator
-     if(type<100){
-         for(var i=0;i<sensorNode.length;i++){
-         if(sensorNode[i].UUID===address){
-             return;
-            }
-         }
-         console.log('>> sensor register ');
-         sensorNode.push(new NodeStruct(address,type));
-     }
-    
-     else{
-         for(var i=0;i<actuator.length;i++){
-         if(actuator[i].UUID===address){
-             return;
-            }
-         }
-         console.log('>> actuator register ');
-         actuator.push(new NodeStruct(address,type));
-         
-     }
-
-}
-
-
-//find which node send data，return node number ,if not found return -1 
-function findNode(address){
-    for(var i=0;i<sensorNode.length;i++){
-         if(sensorNode[i].UUID===address){
-             return i;
-         }
-     }
-    return -1;
-    
-}
-
-// data to send
-var dataToSend=[];
-var discoverNode="";
-//discover
-function toDiscoverNode(){
-    discoverNode="";
-
-    for(var i=0;i<sensorNode.length;i++){
-        if(discoverNode===""){
-            discoverNode=JSON.stringify(sensorNode[i]);
-        }
-        else{
-            discoverNode=discoverNode+","+JSON.stringify(sensorNode[i]);
-        }
-        
-    }
-    for(var i=0;i<actuator.length;i++){
-        if(discoverNode===""){
-            discoverNode=JSON.stringify(actuator[i]);
-        }
-        else{
-            discoverNode=discoverNode+","+JSON.stringify(actuator[i]);
-        }
-    }
-    
-    console.log('>>'+discoverNode);
-}
 
 /////////////////////////////////emergency setting
 var emergencyFlag=Boolean(false);
@@ -144,9 +65,12 @@ server.on('request', function(msg, res) {
             frame_obj.data='{\"Command\":0}';
             frame_obj.destination64='000000000000ffff'; //broadcast
             serialport.write(xbeeAPI.buildFrame(frame_obj));
-            
-            setTimeout(toDiscoverNode,1000);
-            
+            nodeFunction.doDiscoverNode(sensorNode,actuator);
+
+            setTimeout(function() {
+                connectedNode=nodeFunction.getConnectedNode();
+                console.log('>>'+connectedNode);
+                }, 1000);
             
             break;
             
@@ -191,52 +115,32 @@ xbeeAPI.on('frame_object', function (frame) {
     
 
     if(frame.type===139) {  // transmit
-
+         
+      
         }
     
     
     else if(frame.type===144){ //receive
-            /*  frame format
-            type: 144,
-            remote64: '0013a20040c8d185',
-            remote16: '11d1',
-            receiveOptions: 1,
-            data:
-            
-            receiveData format
-            { SM: 1, H: 17, T: 24, E: 1, UUID: '0013a20040c8d185' }*/
-     
-            
-            console.log('>'+frame.data.toString('ascii'));
+            receiveData=frameProcess.preProcess(frame);
         
-            //delete the end null data of xbee receive data
-            var deleteNull = /\0/g;
-            var receiveRawData = frame.data.toString().replace(deleteNull, "");   
-        
-            //把資料處理成json
-            var receiveData = JSON.parse(receiveRawData);
-        
-            //把MAC位置加入json
-            receiveData.UUID=frame.remote64;
-            
-    
             //event 0:confirm gate way ; 1:normal data send ; 2:emergency send
             switch (receiveData.E) { 
                     
                 //receive confirm gateway
                 case 0:
-                    checkNode(frame.remote64,receiveData.Type);
+                    nodeFunction.checkNode(sensorNode,actuator,frame.remote64,receiveData.Type);
                     break;
                 
                 //receive sensor data
                 case 1:
-                    var sensorNodeNumber=findNode(frame.remote64);
+                    var sensorNodeNumber=nodeFunction.findNode(sensorNode,frame.remote64);
                     
                     if(sensorNodeNumber===-1){     //not found
                         console.log('>> fail ,not registered ');
                         
                     }
                     else{
+                        console.log('>> receive sensor data');
                         // node 醒來 ，X秒後睡覺
                         sensorNode[sensorNodeNumber].wakeup=true;
                         setTimeout(function(){sensorNode[sensorNodeNumber].wakeup=false},sensorWorkTime*1000);
@@ -244,13 +148,14 @@ xbeeAPI.on('frame_object', function (frame) {
                         //record sleep mode;
                         sensorNode[sensorNodeNumber].SM=receiveData.SM;
                         
-                        console.log('>> receive sensor data');
-                        
                         //emergence mode
                         if(emergencyFlag===true){
+                            setTimeout(function(){
                             frame_obj.data='{\"Command\":100}';
                             frame_obj.destination64=frame.remote64; //broadcast
                             serialport.write(xbeeAPI.buildFrame(frame_obj));
+                            },500);
+                        
                         }
                         // put data to payload
                         dataToSend.push(receiveData);
@@ -261,7 +166,7 @@ xbeeAPI.on('frame_object', function (frame) {
                  
                 //receive emergency
                 case 2:
-                    var sensorNodeNumber=findNode(frame.remote64);
+                    var sensorNodeNumber=nodeFunction.findNode(sensorNode,frame.remote64);
                     
                     if(sensorNodeNumber===-1){     //not found
                         console.log('>> fail ,not registered ');
@@ -270,14 +175,27 @@ xbeeAPI.on('frame_object', function (frame) {
                     else{
                         console.log('>> receive emergence');
                         
-                        //若沒廣播過，先廣播一次警急模式
+                       
+                        if(recoverFlag===true){
+                            frame_obj.data='{\"Command\":200}';
+                            frame_obj.destination64=frame.remote64; //broadcast
+                            serialport.write(xbeeAPI.buildFrame(frame_obj));
+                            emergencyFlag=true;
+                            dataToSend.push(receiveData);
+                            return;
+                        }
+                         //若沒廣播過，先廣播一次警急模式
                         if(emergencyFlag===false){
                             frame_obj.data='{\"Command\":100}';
                             frame_obj.destination64='000000000000ffff'; //broadcast
                             serialport.write(xbeeAPI.buildFrame(frame_obj));
+                            emergencyFlag=true;
+                            dataToSend.push(receiveData);
+                            return;
                         }
                         
-                        emergencyFlag=true;
+                        
+                        
                         dataToSend.push(receiveData);
                     }
                     
@@ -286,7 +204,7 @@ xbeeAPI.on('frame_object', function (frame) {
                     break;
                     
                 case 3:
-                    var sensorNodeNumber=findNode(frame.remote64);
+                    var sensorNodeNumber=nodeFunction.findNode(sensorNode,frame.remote64);
                     
                     if(sensorNodeNumber===-1){     //not found
                         console.log('>> fail ,not registered ');
@@ -294,12 +212,23 @@ xbeeAPI.on('frame_object', function (frame) {
                     }
                     else{
                         console.log('>> receive recover');
+                        if(emergencyFlag===true){
+                            
+                            emergencyFlag=false;
+                            recoverFlag=true;
                         
-                        emergencyFlag=false;
-                        recoverFlag=true;
+                            setTimeout(function(){
+                                frame_obj.data='{\"Command\":200}';
+                                frame_obj.destination64='000000000000ffff'; //broadcast
+                                serialport.write(xbeeAPI.buildFrame(frame_obj));
+                                console.log('>> send recover');
+                                },500);
+                        }
+                        
                         frame_obj.data='{\"Command\":200}';
-                        frame_obj.destination64='000000000000ffff'; //broadcast
+                        frame_obj.destination64=frame.remote64; //broadcast
                         serialport.write(xbeeAPI.buildFrame(frame_obj));
+                        
                         
                         dataToSend.push(receiveData);
                     }
