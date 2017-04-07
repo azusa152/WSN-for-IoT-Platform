@@ -3,7 +3,8 @@ var moment = require('moment');
 
 // data preprocess
 exports.preProcess= function  (frame){
-    console.log('>'+frame.data.toString('ascii'));
+    console.log('>'+frame.data.toString('ascii')+'UUID:'+frame.remote64);
+   
         
     //delete the end null data of xbee receive data
     var deleteNull = /\0/g;
@@ -13,7 +14,8 @@ exports.preProcess= function  (frame){
     var receiveData = JSON.parse(receiveRawData);
      
     //把MAC位置加入json
-    receiveData.UUID=frame.remote64;
+    
+    
     return receiveData;
    
 }

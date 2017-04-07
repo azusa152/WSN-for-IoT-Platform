@@ -1,9 +1,19 @@
-/*          frame format
+        frame format
             type: 144,
             remote64: '0013a20040c8d185',
             remote16: '11d1',
             receiveOptions: 1,
             data:
             
-            receiveData format
-            { SM: 1, H: 17, T: 24, E: 1, UUID: '0013a20040c8d185' }*/
+        receiveData format
+            {"H":42.00,"T":23.00,"E":1}
+            
+        payload
+   
+           {"UUID":0013a20040c8d185/1001"DATA":42,"utcTime":2017-04-07T04:19:45Z},{"UUID":0013a20040c8d185/1002"DATA":23,"utcTime":2017-04-07T04:19:45Z}
+    
+
+        discover
+            "{\"UUID\":\"0013a20040c8d185\",\"TYPE\":[1001,1002],\"SLEEP_MODE\":1},{\"UUID\":\"0013a2004071f80d\",\"TYPE\":[1]}"
+    
+

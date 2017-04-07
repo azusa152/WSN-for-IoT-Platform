@@ -1,7 +1,8 @@
 var dateFormat = require('dateformat');
-var utcTime=dateFormat(new Date(),"isoUtcDateTime");
+
 
 function addHumidity(transData,receiveData){
+    var utcTime=dateFormat(new Date(),"isoUtcDateTime");
     if(receiveData.H!=undefined){
         var uuid=receiveData.UUID+'/'+'1001'
         if(transData===''){
@@ -14,6 +15,7 @@ function addHumidity(transData,receiveData){
     
 }
 function addTemperature (transData,receiveData){
+    var utcTime=dateFormat(new Date(),"isoUtcDateTime");
     if(receiveData.T!=undefined){
         var uuid=receiveData.UUID+'/'+'1002'
         if(transData===''){

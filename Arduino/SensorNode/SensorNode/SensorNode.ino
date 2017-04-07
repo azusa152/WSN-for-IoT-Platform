@@ -8,7 +8,8 @@
 //////////////////////SENSOR CONFIG 
 #define DHT_PIN A0 
 dht DHT;
-
+float DHTtemperature;
+float DHThumidity;
 //////////////////////ARDUINO CONFIG 
 const byte kLedPin = 13; 
 //const int kNodeType=0;
@@ -133,7 +134,7 @@ xbee.readPacket();
         switch (command){
           
           //receive discover node
-          case 0:
+          case 1:
                   BlinkLed(1);
                   cordinator_flag=true;
                   cordinator_low_address=zbRx.getRemoteAddress64().getLsb();
@@ -187,11 +188,11 @@ void DataSend()
 {
    XBeeAddress64 addr64 = XBeeAddress64(cordinator_high_address, cordinator_low_address); // xbee address
    DetectAbnormalTemperature();
-   
+   ReadDHT();
    String trans_data="{\"H\":";
-   trans_data.concat(String(DHT.humidity));
+   trans_data.concat(String(DHThumidity));
    trans_data.concat(",\"T\":");
-   trans_data.concat(String(DHT.temperature));
+   trans_data.concat(String(DHTtemperature));
    trans_data.concat(",\"E\":");
    trans_data.concat("1");
    trans_data.concat("} ");
@@ -233,10 +234,10 @@ void EmergencySend()
 {
    XBeeAddress64 addr64 = XBeeAddress64(cordinator_high_address, cordinator_low_address); // xbee address
    delay(100);
-   DHT.read11(DHT_PIN);  //dht read
+  
    
    String trans_data="{\"T\":";
-   trans_data.concat(String(DHT.temperature));
+   trans_data.concat(String(DHTtemperature));
    trans_data.concat(",\"E\":");
    trans_data.concat("2");
    trans_data.concat("} ");
@@ -252,10 +253,10 @@ void EmergencySend()
 void RecoverSend()
 {
    XBeeAddress64 addr64 = XBeeAddress64(cordinator_high_address, cordinator_low_address); // xbee address
-   DHT.read11(DHT_PIN);  //dht read
+   
  
    String trans_data="{\"T\":";
-   trans_data.concat(String(DHT.temperature));
+   trans_data.concat(String(DHTtemperature));
    trans_data.concat(",\"E\":");
    trans_data.concat("3");
    trans_data.concat("} ");
@@ -277,7 +278,7 @@ void CheckSleepMode()
       sleep_time=1;
       break;
     case 2:
-      sleep_time=3;
+      sleep_time=225;
       break;
     case 3:
       sleep_time=450;
@@ -335,6 +336,7 @@ void ResetSleep()
 //////////////////////EMERGENCY MODE
 void CheckEmergencyMode()
 {
+   ReadDHT();
    //若還沒回正常
    if(emergency_flag==true&&recover_flag==false){
     emergency_count++;
@@ -354,15 +356,19 @@ void CheckEmergencyMode()
 ///////////////DetectAbnormalTemperature
 void DetectAbnormalTemperature( )
 {
-  DHT.read11(DHT_PIN);  //dht read
+  ReadDHT();
   if(average_temperature!=0){
      
-      if(abs(1-(DHT.temperature/average_temperature))>(kThreshold/100)&&emergency_flag==false){
+      if(abs(1-(DHTtemperature/average_temperature))>(kThreshold/100)&&emergency_flag==false){
+         //record original setting
+        original_temperature=average_temperature;
+        original_sleep_mode=sleep_mode;
         
-        original_temperature=average_temperature; //record not emergence temperature
         EmergencySend();
+        
         recover_flag=false;
         emergency_flag=true;
+        sleep_time=1;
      }
      
       average_temperature=(average_temperature+DHT.temperature)/2;
@@ -375,9 +381,9 @@ void DetectAbnormalTemperature( )
 ///////////////DetectAbnormalTemperature
 void DetectRecover( )
 {
-  DHT.read11(DHT_PIN);  //dht read
   
-   if(abs(1-(original_temperature/DHT.temperature))<(kThreshold/100)) {
+  
+   if(abs(1-(original_temperature/DHTtemperature))<(kThreshold/100)) {
         recover_flag=true;
         sleep_mode=original_sleep_mode;
        
@@ -385,3 +391,9 @@ void DetectRecover( )
   
  
 }
+void ReadDHT(){
+  DHT.read11(DHT_PIN);  //dht read
+  DHThumidity=DHT.humidity;
+  DHTtemperature=DHT.temperature;
+}
+

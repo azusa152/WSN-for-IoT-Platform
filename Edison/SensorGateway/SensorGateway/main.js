@@ -146,7 +146,7 @@ server = http.createServer(function (req, res) {
 
     switch (path.pathname) {
     case '/sevice_discovery':
-        frame_obj.data='{\"Command\":0}';
+        frame_obj.data='{\"Command\":1}';
             frame_obj.destination64='000000000000ffff'; //broadcast
             serialport.write(xbeeAPI.buildFrame(frame_obj));
             nodeFunction.doDiscoverNode(sensorNode,actuator);
@@ -249,7 +249,7 @@ xbeeAPI.on('frame_object', function (frame) {
                             },500);
                         
                         }
-                        
+                        recoverFlag=false;
                         // put data to payload
                         if(dataToSend===''){
                             dataToSend=transDataProcess.payloadPreProcess(receiveData);
@@ -282,18 +282,16 @@ xbeeAPI.on('frame_object', function (frame) {
                             frame_obj.destination64=frame.remote64; //broadcast
                             serialport.write(xbeeAPI.buildFrame(frame_obj));
                             emergencyFlag=true;
-                            dataToSend.push(receiveData);
+                            //dataToSend.push(receiveData);
                             return;
                         }
                          //若沒廣播過，先廣播一次警急模式
-                        if(emergencyFlag===false){
-                            frame_obj.data='{\"Command\":100}';
-                            frame_obj.destination64='000000000000ffff'; //broadcast
-                            serialport.write(xbeeAPI.buildFrame(frame_obj));
-                            emergencyFlag=true;
-                            dataToSend.push(receiveData);
-                            return;
-                        }
+                        frame_obj.data='{\"Command\":100}';
+                        frame_obj.destination64='000000000000ffff'; //broadcast
+                        serialport.write(xbeeAPI.buildFrame(frame_obj));
+                        emergencyFlag=true;
+                        
+                     
                         
                         
        
@@ -313,24 +311,20 @@ xbeeAPI.on('frame_object', function (frame) {
                     }
                     else{
                         console.log('>> receive recover');
-                        if(emergencyFlag===true){
+                        emergencyFlag=false;
+                        recoverFlag=true;
                             
-                            emergencyFlag=false;
-                            recoverFlag=true;
-                        
-                            setTimeout(function(){
-                                frame_obj.data='{\"Command\":200}';
-                                frame_obj.destination64='000000000000ffff'; //broadcast
-                                serialport.write(xbeeAPI.buildFrame(frame_obj));
-                                console.log('>> send recover');
-                                },500);
-                        }
-                        
+                        //send recover command
                         frame_obj.data='{\"Command\":200}';
-                        frame_obj.destination64=frame.remote64; //broadcast
+                        frame_obj.destination64='000000000000ffff'; //broadcast
                         serialport.write(xbeeAPI.buildFrame(frame_obj));
-                        
-                        
+                        console.log('>> send recover');
+                            
+                        setTimeout(function(){
+                            frame_obj.destination64=receiveData.UUID; //broadcast
+                            serialport.write(xbeeAPI.buildFrame(frame_obj));
+                            console.log('>> send node recover');
+                            },500);
                  
                     }
                     
