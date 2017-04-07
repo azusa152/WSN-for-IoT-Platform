@@ -2,26 +2,40 @@
 var connectedNode='';
 
 // sensor 及 actuator 處存格式
-function NodeStruct(address,type) {
-  this.UUID = address;
-  this.TYPE=type;
-  this.wakeup=false; 
+function NodeStruct(receiveData,sensor_flag) {
+   
+  this.UUID = receiveData.UUID;
+  this.TYPE=receiveData.Type;
+    
+  // sensor node record sleepmode and wakeup     
+  if(sensor_flag===true){
+      this.SLEEP_MODE=receiveData.SM;
+      this.wakeup=false; 
+  }
+   
+  
 }
 
 
 
 // check node is recored or not
-exports.checkNode =function checkNode(sensorNode,actuator,address,type){
-    
+exports.checkNode =function checkNode(sensorNode,actuator,receiveData){
     //type <100:sensor ; >100 actuator
-     if(type<100){
+    var sensor_flag=Boolean(false);
+    for(var i=0;i<receiveData.Type.length;i++){
+        if(receiveData.Type[i]>1000){
+            sensor_flag=true;
+        }
+    }
+        
+     if(sensor_flag===true){
          for(var i=0;i<sensorNode.length;i++){
-         if(sensorNode[i].UUID===address){
+         if(sensorNode[i].UUID===receiveData.UUID){
              return;
             }
          }
          console.log('>> sensor register ');
-         sensorNode.push(new NodeStruct(address,type));
+         sensorNode.push(new NodeStruct(receiveData,sensor_flag));
          return;
      }
     
@@ -32,7 +46,7 @@ exports.checkNode =function checkNode(sensorNode,actuator,address,type){
             }
          }
          console.log('>> actuator register ');
-         actuator.push(new NodeStruct(address,type));
+         actuator.push(new NodeStruct(receiveData,sensor_flag));
          return;
          
      }
@@ -41,9 +55,10 @@ exports.checkNode =function checkNode(sensorNode,actuator,address,type){
 
 
 //find which node send data，return node number ,if not found return -1 
-exports.findNode= function (sensorNode,address){
-    for(var i=0;i<sensorNode.length;i++){
-         if(sensorNode[i].UUID===address){
+exports.findNode= function (node,receiveData){
+     
+    for(var i=0;i<node.length;i++){
+         if(node[i].UUID===receiveData.UUID){
              return i;
          }
      }
@@ -54,14 +69,15 @@ exports.findNode= function (sensorNode,address){
 
 //discover connected node
 function discoverNode(sensorNode,actuator){
-     connectedNode='';
-
-    for(var i=0;i<sensorNode.length;i++){
+    connectedNode='';
+    var sensorNodeTemp=sensorNode;
+    for(var i=0;i<sensorNodeTemp.length;i++){
+        delete sensorNodeTemp[i].wakeup;
         if(connectedNode===''){
-            connectedNode=JSON.stringify(sensorNode[i]);
+            connectedNode=JSON.stringify(sensorNodeTemp[i]);
         }
         else{
-            connectedNode=connectedNode+','+JSON.stringify(sensorNode[i]);
+            connectedNode=connectedNode+','+JSON.stringify(sensorNodeTemp[i]);
         }
         
     }

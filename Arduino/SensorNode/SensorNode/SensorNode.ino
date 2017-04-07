@@ -11,8 +11,8 @@ dht DHT;
 
 //////////////////////ARDUINO CONFIG 
 const byte kLedPin = 13; 
-const int kNodeType=0;
-
+//const int kNodeType=0;
+const String kNodeType="[1001,1002]";
 //////////////////////SLEEP CONFIG
 volatile int sleep_count = 0; // Keep track of how many sleep done
 const int kWorkTime=5; //work 5 seconds
@@ -40,24 +40,25 @@ float original_temperature=0; // before emergence value
 int original_sleep_mode =1;
 
 //////////////////////MAIN FUNCTION
-void setup() {
+void setup() 
+{
   Serial.begin(9600); 
   pinMode(kLedPin, OUTPUT);
 }
  
 void loop() 
 {
-  if(cordinator_flag==true)  //to check if gateway is connect
-  {
+  //to check if gateway is connect
+  if(cordinator_flag==true)  {
      GoToSleep();
-     if (sleep_count == sleep_time)  //if time up,then wake up
-     {
+     //if time up,then wake up
+     if (sleep_count == sleep_time)  {
         WakeUp();
      }
   }
-  else
-  {
-    DataReceive();                //if gateway not detected,always on and listen 
+  else{
+    //if gateway not detected,always on and listen 
+    DataReceive();                
   }
   
 }
@@ -67,37 +68,38 @@ void WakeUp()
 {
    //if in emergency mode,send emergence data
    CheckEmergencyMode();
-   // in emergency and not recovered then return
-   if(emergency_flag==true&&recover_flag==false)
-   {
+   
+   // in emergency and not recovered ,return
+   if(emergency_flag==true&&recover_flag==false){
       return;
    }
    
    
-   int times=0; // time   
+   int counter=0; // record count 
    digitalWrite(kLedPin, HIGH);
 
    //recovered but not receive stop emergence  
-   if(emergency_flag==true&&recover_flag==true)
-   {
+   if(emergency_flag==true&&recover_flag==true){
       RecoverSend();
    }
+   
    // in normal mode
-   else
-   {
+   else{
       DataSend();  
    }
-                     
+   
+   //check sleep mode         
    CheckSleepMode();
    
-   while(times<=(kWorkTime*2))   //0.1 second ;wait receive process
+   while(counter<=(kWorkTime*2))   //0.1 second ;wait receive process
    { 
-      times ++;
+      counter ++;
       DataReceive();
-      // check temperature 
-      CheckAverageTemperature();            
-      if(emergency_flag==true&&recover_flag==false)
-      {
+      
+      // DetectAbnormal
+      DetectAbnormalTemperature();    
+              
+      if(emergency_flag==true&&recover_flag==false){
         digitalWrite(kLedPin, LOW);  //turn off led 
         ResetSleep();
         return;
@@ -120,14 +122,17 @@ xbee.readPacket();
     if (xbee.getResponse().getApiId() == ZB_RX_RESPONSE) {
       xbee.getResponse().getZBRxResponse(zbRx);
       String receive_data = zbRx.getData();
+      
       //json convert
       StaticJsonBuffer<200> json_buffer;
       JsonObject& receive_json_data = json_buffer.parseObject(receive_data.c_str());
       int command=receive_json_data["Command"];
- 
-      if(cordinator_flag!=true)  //if first time detected gateway
-      {
+      
+      //if first time detected gateway
+      if(cordinator_flag!=true)  {
         switch (command){
+          
+          //receive discover node
           case 0:
                   BlinkLed(1);
                   cordinator_flag=true;
@@ -155,6 +160,7 @@ xbee.readPacket();
                    EmergencySend();
                   }
                   break;
+                  
           //receive stop emergence command
           case 200:
                   emergency_flag=false;
@@ -180,11 +186,9 @@ xbee.readPacket();
 void DataSend()
 {
    XBeeAddress64 addr64 = XBeeAddress64(cordinator_high_address, cordinator_low_address); // xbee address
-   CheckAverageTemperature();
+   DetectAbnormalTemperature();
    
-   String trans_data="{\"SM\":";
-   trans_data.concat(String(sleep_mode));
-   trans_data.concat(",\"H\":");
+   String trans_data="{\"H\":";
    trans_data.concat(String(DHT.humidity));
    trans_data.concat(",\"T\":");
    trans_data.concat(String(DHT.temperature));
@@ -207,9 +211,11 @@ void ConfirmGateway()
 {
    XBeeAddress64 addr64 = XBeeAddress64(cordinator_high_address, cordinator_low_address); // xbee address
    String trans_data="{\"Type\":";
-   trans_data.concat(String(kNodeType));
-    trans_data.concat(",\"E\":");
+   trans_data.concat(kNodeType);
+   trans_data.concat(",\"E\":");
    trans_data.concat("0");
+   trans_data.concat(",\"SM\":");
+   trans_data.concat(String(sleep_mode));
    trans_data.concat("} ");
     
    uint8_t trans_data_array[trans_data.length()];
@@ -226,8 +232,9 @@ void ConfirmGateway()
 void EmergencySend()
 {
    XBeeAddress64 addr64 = XBeeAddress64(cordinator_high_address, cordinator_low_address); // xbee address
+   delay(100);
    DHT.read11(DHT_PIN);  //dht read
- 
+   
    String trans_data="{\"T\":";
    trans_data.concat(String(DHT.temperature));
    trans_data.concat(",\"E\":");
@@ -328,48 +335,49 @@ void ResetSleep()
 //////////////////////EMERGENCY MODE
 void CheckEmergencyMode()
 {
-   if(emergency_flag==true&&recover_flag==false)
-   {
+   //若還沒回正常
+   if(emergency_flag==true&&recover_flag==false){
     emergency_count++;
     EmergencySend();
     ResetSleep();
    }
-   
-   if(emergency_count==kEmergencyTime)
-   {
+
+   // 隔一段時間後檢查有沒有回到正常
+   if(emergency_count==kEmergencyTime){
     emergency_count=0;
-    CheckEmergenceRecover( );
+    DetectRecover( );
    }
    
 
 }
-///////////////CheckAverageTemperature
-void CheckAverageTemperature( )
+
+///////////////DetectAbnormalTemperature
+void DetectAbnormalTemperature( )
 {
   DHT.read11(DHT_PIN);  //dht read
-  if(average_temperature!=0)
-  {
+  if(average_temperature!=0){
      
-      if(abs(1-(DHT.temperature/average_temperature))>(kThreshold/100))
-     {
+      if(abs(1-(DHT.temperature/average_temperature))>(kThreshold/100)&&emergency_flag==false){
+        
         original_temperature=average_temperature; //record not emergence temperature
         EmergencySend();
         recover_flag=false;
         emergency_flag=true;
      }
+     
       average_temperature=(average_temperature+DHT.temperature)/2;
   }
-  else
-  {
+  else {
     average_temperature=DHT.temperature;    
   }
 }
-///////////////CheckAverageTemperature
-void CheckEmergenceRecover( )
+
+///////////////DetectAbnormalTemperature
+void DetectRecover( )
 {
   DHT.read11(DHT_PIN);  //dht read
-   if(abs(1-(original_temperature/DHT.temperature))<(kThreshold/100))
-     {
+  
+   if(abs(1-(original_temperature/DHT.temperature))<(kThreshold/100)) {
         recover_flag=true;
         sleep_mode=original_sleep_mode;
        

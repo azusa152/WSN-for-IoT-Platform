@@ -5,7 +5,7 @@
 
 //////////////////////ARDUINO CONFIG 
 const byte kLedPin = 13; 
-const int kNodeType=101;
+const String kNodeType ="[1]";
 
 //////////////////////GATEWAY CONFIG
 boolean cordinator_flag=false;
@@ -94,7 +94,7 @@ void ConfirmGateway()
    XBeeAddress64 addr64 = XBeeAddress64(cordinator_high_address, cordinator_low_address); // xbee address
    
    String trans_data="{\"Type\":";
-   trans_data.concat(String(kNodeType));
+   trans_data.concat(kNodeType);
    trans_data.concat(",\"E\":");
    trans_data.concat("0");
    trans_data.concat("} ");
