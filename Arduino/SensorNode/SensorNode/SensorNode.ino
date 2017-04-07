@@ -91,24 +91,24 @@ void WakeUp()
    
    //check sleep mode         
    CheckSleepMode();
-   
-   while(counter<=(kWorkTime*2))   //0.1 second ;wait receive process
-   { 
-      counter ++;
+  
+   while(counter<=(kWorkTime*10))   //0.1 second ;wait receive process
+   {  
       DataReceive();
+      counter ++;
       
-      // DetectAbnormal
-      DetectAbnormalTemperature();    
-              
-      if(emergency_flag==true&&recover_flag==false){
-        digitalWrite(kLedPin, LOW);  //turn off led 
-        ResetSleep();
-        return;
+      // DetectAbnormal 每秒偵測1次
+      if(counter%1000==0){
+         DetectAbnormalTemperature();    
+         if(emergency_flag==true&&recover_flag==false){
+             digitalWrite(kLedPin, LOW);  //turn off led 
+             ResetSleep();
+              return;
+            }
       }
-      
-      
+     
       digitalWrite(kLedPin, HIGH);
-      delay(500);
+      delay(100);
    }
    
    digitalWrite(kLedPin, LOW);  //turn off led 
