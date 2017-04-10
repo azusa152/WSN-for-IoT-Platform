@@ -5,7 +5,7 @@ var connectedNode='';
 function NodeStruct(receiveData,sensor_flag) {
    
   this.UUID = receiveData.UUID;
-  this.TYPE=receiveData.Type;
+  this.TYPE=receiveData.TYPE;
     
   // sensor node record sleepmode and wakeup     
   if(sensor_flag===true){
@@ -22,8 +22,8 @@ function NodeStruct(receiveData,sensor_flag) {
 exports.checkNode =function checkNode(sensorNode,actuator,receiveData){
     //type <100:sensor ; >100 actuator
     var sensor_flag=Boolean(false);
-    for(var i=0;i<receiveData.Type.length;i++){
-        if(receiveData.Type[i]>1000){
+    for(var i=0;i<receiveData.TYPE.length;i++){
+        if(receiveData.TYPE[i]>1000){
             sensor_flag=true;
         }
     }
@@ -34,8 +34,11 @@ exports.checkNode =function checkNode(sensorNode,actuator,receiveData){
              return;
             }
          }
-         console.log('>> sensor register ');
+         console.log('>> sensor register');
+         
+         
          sensorNode.push(new NodeStruct(receiveData,sensor_flag));
+        
          return;
      }
     
@@ -70,9 +73,12 @@ exports.findNode= function (node,receiveData){
 //discover connected node
 function discoverNode(sensorNode,actuator){
     connectedNode='';
-    var sensorNodeTemp=sensorNode;
+    var sensorNodeTemp=new Array(sensorNode.length);
+    
     for(var i=0;i<sensorNodeTemp.length;i++){
+        sensorNodeTemp[i]=sensorNode[i];
         delete sensorNodeTemp[i].wakeup;
+        
         if(connectedNode===''){
             connectedNode=JSON.stringify(sensorNodeTemp[i]);
         }

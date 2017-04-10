@@ -44,7 +44,9 @@ var sensorWorkTime=5; //sensor 醒來使work 5秒
 
 /////////////////////////////////emergency setting
 var emergencyFlag=Boolean(false);
+var emergencyCounter=0;
 var recoverFlag=Boolean(false);
+var recoverCounter=0;
 
 
 //time 
@@ -259,7 +261,7 @@ xbeeAPI.on('frame_object', function (frame) {
                         }
                         
                         
-                        console.log('>>>'+dataToSend);
+                        //console.log('>>>'+dataToSend);
                     }
                     
                     break;
@@ -290,7 +292,8 @@ xbeeAPI.on('frame_object', function (frame) {
                         frame_obj.destination64='000000000000ffff'; //broadcast
                         serialport.write(xbeeAPI.buildFrame(frame_obj));
                         emergencyFlag=true;
-                        
+                        emergencyCounter++;
+                        console.log('>>>> debug emergencyCounter:'+emergencyCounter);
                      
                         
                         
@@ -325,7 +328,8 @@ xbeeAPI.on('frame_object', function (frame) {
                             serialport.write(xbeeAPI.buildFrame(frame_obj));
                             console.log('>> send node recover');
                             },500);
-                 
+                        recoverCounter++;
+                         console.log('>>>>debug recoverCounter:'+recoverCounter);
                     }
                     
                    
