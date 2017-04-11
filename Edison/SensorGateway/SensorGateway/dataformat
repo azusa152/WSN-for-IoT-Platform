@@ -1,16 +1,17 @@
-        frame format
+        frame format{
             type: 144,
             remote64: '0013a20040c8d185',
             remote16: '11d1',
             receiveOptions: 1,
             data:
+            }
             
         receiveData format
             {"H":42.00,"T":23.00,"E":1}
             
         payload
    
-           {"UUID":0013a20040c8d185/1001"DATA":42,"utcTime":2017-04-07T04:19:45Z},{"UUID":0013a20040c8d185/1002"DATA":23,"utcTime":2017-04-07T04:19:45Z}
+           {"UUID":0013a20040c8d185/1001"DATA":42,"TIME":2017-04-07T04:19:45Z},{"UUID":0013a20040c8d185/1002"DATA":23,"TIME":2017-04-07T04:19:45Z}
     
 
         discover

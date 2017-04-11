@@ -1,38 +1,31 @@
 var dateFormat = require('dateformat');
+var sensorData=[];
 
-
-function addHumidity(transData,receiveData){
-    var utcTime=dateFormat(new Date(),"isoUtcDateTime");
-    if(receiveData.H!=undefined){
-        var uuid=receiveData.UUID+'/'+'1001'
-        if(transData===''){
-           transData='{\"UUID\":'+uuid+'\"DATA\":'+receiveData.H+',\"utcTime\":'+utcTime+'}';
-            return transData;
-        }
-        transData=transData+','+'{\"UUID\":'+uuid+'\"DATA\":'+receiveData.H+',\"utcTime\":'+utcTime+'}';
-        return transData;
-    }
-    
+function NodeStruct(uuid,data,time) {
+  this.UUID =uuid;
+  this.DATA=data;
+  this.TIME=time;
 }
-function addTemperature (transData,receiveData){
-    var utcTime=dateFormat(new Date(),"isoUtcDateTime");
+function addHumidity(receiveData){
+  
+    if(receiveData.H!=undefined){
+        var utcTime=dateFormat(new Date(),"isoUtcDateTime");
+        var uuid=receiveData.UUID+'/'+'1001'
+        sensorData.push(new NodeStruct(uuid,receiveData.H,utcTime));
+    }   
+}
+function addTemperature (receiveData){
     if(receiveData.T!=undefined){
+        var utcTime=dateFormat(new Date(),"isoUtcDateTime");
         var uuid=receiveData.UUID+'/'+'1002'
-        if(transData===''){
-           transData='{\"UUID\":'+uuid+'\"DATA\":'+receiveData.T+',\"utcTime\":'+utcTime+'}';
-            return transData;
-        }
-        transData=transData+','+'{\"UUID\":'+uuid+'\"DATA\":'+receiveData.T+',\"utcTime\":'+utcTime+'}';
-        return transData;
-    }
-    
+        sensorData.push(new NodeStruct(uuid,receiveData.T,utcTime));
+    }   
 }
 exports.payloadPreProcess= function  (receiveData){
-    var transProcessData='';
     
-    transProcessData=addHumidity(transProcessData,receiveData);
-    transProcessData=addTemperature(transProcessData,receiveData);
-    return transProcessData;
+    transProcessData=addHumidity(receiveData);
+    transProcessData=addTemperature(receiveData);
+    return sensorData;
    
 }
 /*

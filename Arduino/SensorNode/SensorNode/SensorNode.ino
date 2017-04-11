@@ -233,6 +233,7 @@ void TransData(int event)
 
       case 2://confirm gateway
         root["T"]=DHTtemperature;
+        root["DEBUG "]=original_temperature;
         break;
 
       case 3://confirm gateway
