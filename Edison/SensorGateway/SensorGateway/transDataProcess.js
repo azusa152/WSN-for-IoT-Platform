@@ -22,7 +22,7 @@ function addTemperature (receiveData){
     }   
 }
 exports.payloadPreProcess= function  (receiveData){
-    
+    sensorData.length=0;
     transProcessData=addHumidity(receiveData);
     transProcessData=addTemperature(receiveData);
     return sensorData;

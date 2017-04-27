@@ -6,7 +6,7 @@ const nodeFunction=require('./nodeFunction');
 const frameProcess=require('./frameProcess');
 const openSerialPPort=require('./openSerial');
 const transDataProcess=require('./transDataProcess');
-
+var dateFormat = require('dateformat');
 /////////////////////////////////serial port bug fix
 openSerialPPort.openMySerialPort();
 
@@ -41,6 +41,11 @@ var sensorWorkTime=4; //sensor 醒來使work 5秒
 var emergencyFlag=Boolean(false);
 var recoverFlag=Boolean(false);
 
+////////////////////////////////ip setting
+var ponte_ip="134.208.3.210:1883";
+var gateway_ip="192.168.1.128";
+var dataCounter=0;
+
 ///////////////////////////////////////////////////////////////////////////////COAP
 //////coap server
 
@@ -50,8 +55,6 @@ const coap  = require('coap')
     host: '192.168.1.128',
   }), port = 5683
 
-var ponte_ip="";
-var gateway_ip="192.168.1.128";
 
 
 
@@ -111,15 +114,35 @@ server.listen(5683, function() {
   console.log('Server is listening')
 })
 
+if(ponte_ip!==""){
+    setTimeout(function() {
+        frame_obj.data='{\"Command\":1}';
+        frame_obj.destination64='000000000000ffff'; //broadcast
+        serialport.write(xbeeAPI.buildFrame(frame_obj));
+                }, 2000);
+   
+       
+put_sensor_data(sensorData);//切好sensor data都要執行這個方法,送出sensor data
+}
+
+function put_sensor_data(sensor_data){
+    
+   var start=setInterval(put_sensor_data_to_ponte,30000,sensor_data);
+}
+
 function put_sensor_data_to_ponte(payload){
-    var sensor_data_topic=gateway_ip+'/'+payload.UUID
+    var now = new Date();
+    dataCounter++;
+    payload.push(dateFormat(now, "isoDateTime"));
+    //console.log(JSON.stringify(payload));
+    var sensor_data_topic=gateway_ip;
     var req = coap.request({
      host:ponte_ip,//ponte_ip
      port:5683,
      method:'put',
      pathname:'/r/'+sensor_data_topic
     });
-    console.log(payload.DATA);
+    //console.log(payload.DATA);
     req.write(JSON.stringify(payload));
     req.on('response', function(res) {
     res.pipe(process.stdout)
@@ -128,6 +151,9 @@ function put_sensor_data_to_ponte(payload){
 });
 
 });
+  
+console.log(dateFormat(now, "h:MM:ss.l"));
+sensorData.length=0;
 req.end()
 }
 */
@@ -141,8 +167,7 @@ var server,
     http = require('http'),
     url = require('url'),
     path;
-var ponte_ip="";
-var gateway_ip="192.168.1.128";
+
 
 server = http.createServer(function (req, res) {
       path = url.parse(req.url);
@@ -213,9 +238,32 @@ console.log("Server running at http://" + ip + ":" + port);
 
 
 //向ponte送出sensors data
-function put_sensor_data_to_ponte(payload){
+if(ponte_ip!==""){
+    setTimeout(function() {
+        frame_obj.data='{\"Command\":1}';
+        frame_obj.destination64='000000000000ffff'; //broadcast
+        serialport.write(xbeeAPI.buildFrame(frame_obj));
+                }, 2000);
+   
+       
+put_sensor_data(sensorData);//切好sensor data都要執行這個方法,送出sensor data
+}
 
-    var sensor_data_topic=gateway_ip+'/'+ payload.UUID;   
+function put_sensor_data(sensor_data){
+    
+   var start=setInterval(put_sensor_data_to_ponte,30000,sensor_data);
+}
+
+
+
+
+//向ponte送出sensors data
+function put_sensor_data_to_ponte(payload){
+    var now = new Date();
+    dataCounter++;
+    payload.push(dateFormat(now, "isoDateTime"));
+
+    var sensor_data_topic=gateway_ip;   
 
     var options = {
         "host":ponte_ip, //ponte_ip
@@ -230,13 +278,18 @@ function put_sensor_data_to_ponte(payload){
         str += chunk
         })
         response.on('end',function(){
-        //console.log(str)
+       
         })
     }    
     
-    console.log(payload.DATA);
+    
     var body=JSON.stringify(payload);
     http.request(options, callback).end(body);
+    if(dataCounter>100){
+        server.close();
+    }
+    console.log(dateFormat(now, "h:MM:ss.l"));
+    sensorData.length=0;
 }
 */
 ////////////////////////////////////////////////////////////////////HTTP
@@ -244,13 +297,13 @@ function put_sensor_data_to_ponte(payload){
 ///////////////////////////////////////////////////////////////////// MQTT
 
 var mqtt   = require('mqtt'); 
-var gateway_ip='192.168.1.128';//gatewayip
-var ponte_ip='192.168.1.140:1883';//gatewayip
 
 var client = mqtt.connect('mqtt://'+ponte_ip);
+
 var sevice_discovery_topic = gateway_ip+'/sevice_discovery';
 client.on('connect', function () {
    client.subscribe(sevice_discovery_topic);
+   console.log('Server is listening')
 });
 
 client.on('message', function (topic, message) {
@@ -271,7 +324,7 @@ client.on('message', function (topic, message) {
         var payload=connectedNode;
         var client =mqtt.connect('mqtt://'+ponte_ip);//ponte ip
         client.publish(topic,JSON.stringify(connectedNode),{retain:true});
-        client.end();
+       
           
             }, 2000);
 });
@@ -284,8 +337,26 @@ var client =mqtt.connect('mqtt://'+ponte_ip);//ponte ip
 client.publish(topic,JSON.stringify(payloads),{
   retain:true
 })
-client.end();
 console.log(payloads);
+}
+
+
+//put sensorsdata
+
+if(ponte_ip!==""){
+    setTimeout(function() {
+        frame_obj.data='{\"Command\":1}';
+        frame_obj.destination64='000000000000ffff'; //broadcast
+        serialport.write(xbeeAPI.buildFrame(frame_obj));
+                }, 2000);
+   
+       
+put_sensor_data(sensorData);//切好sensor data都要執行這個方法,送出sensor data
+}
+
+function put_sensor_data(sensor_data){
+    
+   var start=setInterval(put_sensor_data_to_ponte,30000,sensor_data);
 }
 
 
@@ -293,12 +364,19 @@ console.log(payloads);
 
 function put_sensor_data_to_ponte(payloads){
 var ip=gateway_ip;//gateway ip
-var topic=ip+'/'+payloads.UUID;//sensordata topic
+var topic=ip;//sensordata topic
+var now = new Date();
+dataCounter++;
+payloads.push(dateFormat(now, "isoDateTime"));
 var client =mqtt.connect('mqtt://'+ponte_ip);
 client.publish(topic,JSON.stringify(payloads),{
   retain:true
 })
-client.end();
+
+
+  
+    console.log(dateFormat(now, "h:MM:ss.l"));
+    sensorData.length=0;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -358,14 +436,7 @@ xbeeAPI.on('frame_object', function (frame) {
                         recoverFlag=false;
                         
                         // put data to ponte
-                        sensorData=transDataProcess.payloadPreProcess(receiveData);
-                        for(var i=0;i<sensorData.length;i++){
-                            if(ponte_ip!==""){
-                                put_sensor_data_to_ponte(sensorData[i]);//切好sensor data都要執行這個方法,送出sensor data
-                                }
-                            
-                            }
-                        sensorData.length=0;
+                       sensorData.push(transDataProcess.payloadPreProcess(receiveData));
                        
                        
                     }
