@@ -29,8 +29,8 @@
         "name": "LICENSE.md"
       },
       "main.js": {
-        "previousModTime": 1493192691874,
-        "modified": 1493192691874,
+        "previousModTime": 1493368859303,
+        "modified": 1493368859303,
         "seen": true,
         "name": "main.js"
       },
@@ -53,8 +53,8 @@
         "name": "SensorGateway.xdk"
       },
       "SensorGateway.xdke": {
-        "previousModTime": 1493192695071,
-        "modified": 1493192695071,
+        "previousModTime": 1493368792316,
+        "modified": 1493368792316,
         "seen": true,
         "name": "SensorGateway.xdke"
       },
@@ -71,14 +71,14 @@
         "name": "openSerial.js"
       },
       "nodeFunction.js": {
-        "previousModTime": 1491829485918,
-        "modified": 1491829485918,
+        "previousModTime": 1493367622180,
+        "modified": 1493367622180,
         "seen": true,
         "name": "nodeFunction.js"
       },
       "dataformat": {
-        "previousModTime": 1491893416037,
-        "modified": 1491893416037,
+        "previousModTime": 1493368862578,
+        "modified": 1493368862578,
         "seen": true,
         "name": "dataformat"
       },
@@ -95,6 +95,40 @@
         "name": "transDataProcess.js"
       }
     },
-    "boardFileStatus": {}
+    "boardFileStatus": {
+      "icon.png": {
+        "previousModTime": 1493368862972
+      },
+      "LICENSE.md": {
+        "previousModTime": 1493368862972
+      },
+      "main.js": {
+        "previousModTime": 1493368862972
+      },
+      "package.json": {
+        "previousModTime": 1493368862972
+      },
+      "README.md": {
+        "previousModTime": 1493368862972
+      },
+      "xdk/project-info.json": {
+        "previousModTime": 1493368862972
+      },
+      "openSerial.js": {
+        "previousModTime": 1493368862972
+      },
+      "nodeFunction.js": {
+        "previousModTime": 1493368862972
+      },
+      "dataformat": {
+        "previousModTime": 1493368862972
+      },
+      "frameProcess.js": {
+        "previousModTime": 1493368862972
+      },
+      "transDataProcess.js": {
+        "previousModTime": 1493368862972
+      }
+    }
   }
 }

@@ -225,18 +225,18 @@ void TransData(int event)
         root["SM"]=sleep_mode;
       }
         break;
-      case 1://confirm gateway
+      case 1://send normal data
         DetectAbnormalTemperature();
         root["H"]=DHThumidity;
         root["T"]=DHTtemperature;
         break;
 
-      case 2://confirm gateway
+      case 2://send EMERGENCY data
         root["T"]=DHTtemperature;
         root["DEBUG "]=original_temperature;
         break;
 
-      case 3://confirm gateway
+      case 3://send RECOVER data
         root["T"]=DHTtemperature;
         break;
    }
