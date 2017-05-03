@@ -24,6 +24,7 @@ ZBRxResponse zbRx = ZBRxResponse();
 void setup() {
   Serial.begin(9600); 
   pinMode(kLedPin, OUTPUT);
+  pinMode(relayPin, OUTPUT); 
 }
  
 void loop() 
@@ -65,14 +66,14 @@ xbee.readPacket();
          switch (command){
          
           case 2:
-                 if (relayState == 0)                         
-                      relayState = 1;                      // 把繼電器狀態改為 ON
-                  digitalWrite(relayPin, relayState);    // 讓繼電器作動, 切換開關
+            
+                  digitalWrite(relayPin, 1);  
+                  BlinkLed(command);
                   break;
           case 3:
-                  if (relayState == 1)                         
-                      relayState = 0;                      // 把繼電器狀態改為 ON
-                  digitalWrite(relayPin, relayState);    // 讓繼電器作動, 切換開關
+ 
+                  digitalWrite(relayPin, 0);  
+                   BlinkLed(command);
                  
                   break;
           case 4:

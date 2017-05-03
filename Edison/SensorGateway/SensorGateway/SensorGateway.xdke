@@ -29,8 +29,8 @@
         "name": "LICENSE.md"
       },
       "main.js": {
-        "previousModTime": 1493368859303,
-        "modified": 1493368859303,
+        "previousModTime": 1493800654780,
+        "modified": 1493800654780,
         "seen": true,
         "name": "main.js"
       },
@@ -53,8 +53,8 @@
         "name": "SensorGateway.xdk"
       },
       "SensorGateway.xdke": {
-        "previousModTime": 1493368792316,
-        "modified": 1493368792316,
+        "previousModTime": 1493800412594,
+        "modified": 1493800412594,
         "seen": true,
         "name": "SensorGateway.xdke"
       },
@@ -64,70 +64,40 @@
         "seen": true,
         "name": "xdk/project-info.json"
       },
-      "openSerial.js": {
-        "previousModTime": 1491288575226,
-        "modified": 1491288575226,
-        "seen": true,
-        "name": "openSerial.js"
-      },
-      "nodeFunction.js": {
-        "previousModTime": 1493367622180,
-        "modified": 1493367622180,
-        "seen": true,
-        "name": "nodeFunction.js"
-      },
       "dataformat": {
-        "previousModTime": 1493368862578,
-        "modified": 1493368862578,
+        "previousModTime": 1493797220085,
+        "modified": 1493797220085,
         "seen": true,
         "name": "dataformat"
       },
-      "frameProcess.js": {
+      "module/frameProcess.js": {
         "previousModTime": 1491829485916,
         "modified": 1491829485916,
         "seen": true,
-        "name": "frameProcess.js"
+        "name": "module/frameProcess.js"
       },
-      "transDataProcess.js": {
+      "module/nodeFunction.js": {
+        "previousModTime": 1493789292466,
+        "modified": 1493789292466,
+        "seen": true,
+        "name": "module/nodeFunction.js"
+      },
+      "module/transDataProcess.js": {
         "previousModTime": 1493191276832,
         "modified": 1493191276832,
         "seen": true,
-        "name": "transDataProcess.js"
+        "name": "module/transDataProcess.js"
+      },
+      "openSerial.js": {
+        "previousModTime": 1493383258842,
+        "modified": 1493383258842,
+        "seen": true,
+        "name": "openSerial.js"
       }
     },
     "boardFileStatus": {
-      "icon.png": {
-        "previousModTime": 1493368862972
-      },
-      "LICENSE.md": {
-        "previousModTime": 1493368862972
-      },
       "main.js": {
-        "previousModTime": 1493368862972
-      },
-      "package.json": {
-        "previousModTime": 1493368862972
-      },
-      "README.md": {
-        "previousModTime": 1493368862972
-      },
-      "xdk/project-info.json": {
-        "previousModTime": 1493368862972
-      },
-      "openSerial.js": {
-        "previousModTime": 1493368862972
-      },
-      "nodeFunction.js": {
-        "previousModTime": 1493368862972
-      },
-      "dataformat": {
-        "previousModTime": 1493368862972
-      },
-      "frameProcess.js": {
-        "previousModTime": 1493368862972
-      },
-      "transDataProcess.js": {
-        "previousModTime": 1493368862972
+        "previousModTime": 1493800656356
       }
     }
   }
