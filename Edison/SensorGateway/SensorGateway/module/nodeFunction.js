@@ -24,7 +24,7 @@ exports.checkNode =function checkNode(sensorNode,actuator,receiveData){
     //type <100:sensor ; >100 actuator
     
     for(var i=0;i<receiveData.TYPE.length;i++){
-        console.log(receiveData.TYPE[i]);
+      
         if(receiveData.TYPE[i]>1000){
             sensor_flag=true;
         }
@@ -75,6 +75,7 @@ exports.findNode= function (node,receiveData){
 //discover connected node
 function discoverNode(sensorNode,actuator){
     //connectedNode='';
+    
     var sensorNodeTemp=new Array(sensorNode.length);
     if(sensornodeQuantity<sensorNodeTemp.length){
         for(sensornodeQuantity;sensornodeQuantity<sensorNodeTemp.length;sensornodeQuantity++){
@@ -94,7 +95,7 @@ function discoverNode(sensorNode,actuator){
             }
             delete sensorNodeTemp[sensornodeQuantity].TYPE;
             sensorNodeTemp[sensornodeQuantity].TYPE=type;
-
+            
             if(connectedNode===''){
                 connectedNode=JSON.stringify(sensorNodeTemp[sensornodeQuantity]);
             }

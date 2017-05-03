@@ -29,8 +29,8 @@
         "name": "LICENSE.md"
       },
       "main.js": {
-        "previousModTime": 1493800654780,
-        "modified": 1493800654780,
+        "previousModTime": 1493803905742,
+        "modified": 1493803905742,
         "seen": true,
         "name": "main.js"
       },
@@ -53,8 +53,8 @@
         "name": "SensorGateway.xdk"
       },
       "SensorGateway.xdke": {
-        "previousModTime": 1493800412594,
-        "modified": 1493800412594,
+        "previousModTime": 1493803567591,
+        "modified": 1493803567591,
         "seen": true,
         "name": "SensorGateway.xdke"
       },
@@ -65,39 +65,39 @@
         "name": "xdk/project-info.json"
       },
       "dataformat": {
-        "previousModTime": 1493797220085,
-        "modified": 1493797220085,
+        "previousModTime": 1493800933950,
+        "modified": 1493800933950,
         "seen": true,
         "name": "dataformat"
       },
       "module/frameProcess.js": {
-        "previousModTime": 1491829485916,
-        "modified": 1491829485916,
+        "previousModTime": 1493803350685,
+        "modified": 1493803350685,
         "seen": true,
         "name": "module/frameProcess.js"
       },
       "module/nodeFunction.js": {
-        "previousModTime": 1493789292466,
-        "modified": 1493789292466,
+        "previousModTime": 1493803277239,
+        "modified": 1493803277239,
         "seen": true,
         "name": "module/nodeFunction.js"
       },
       "module/transDataProcess.js": {
-        "previousModTime": 1493191276832,
-        "modified": 1493191276832,
+        "previousModTime": 1493800933953,
+        "modified": 1493800933953,
         "seen": true,
         "name": "module/transDataProcess.js"
       },
       "openSerial.js": {
-        "previousModTime": 1493383258842,
-        "modified": 1493383258842,
+        "previousModTime": 1493800933954,
+        "modified": 1493800933954,
         "seen": true,
         "name": "openSerial.js"
       }
     },
     "boardFileStatus": {
       "main.js": {
-        "previousModTime": 1493800656356
+        "previousModTime": 1493803939346
       }
     }
   }
