@@ -1,6 +1,7 @@
 //record all nodes that connect to gateway
 var connectedNode='';
-
+var sensornodeQuantity=0;
+var actuatorQuantity=0;
 // sensor 及 actuator 處存格式
 function NodeStruct(receiveData,sensor_flag) {
    
@@ -21,8 +22,9 @@ function NodeStruct(receiveData,sensor_flag) {
 // check node is recored or not
 exports.checkNode =function checkNode(sensorNode,actuator,receiveData){
     //type <100:sensor ; >100 actuator
-    var sensor_flag=Boolean(false);
+    
     for(var i=0;i<receiveData.TYPE.length;i++){
+        console.log(receiveData.TYPE[i]);
         if(receiveData.TYPE[i]>1000){
             sensor_flag=true;
         }
@@ -72,29 +74,66 @@ exports.findNode= function (node,receiveData){
 
 //discover connected node
 function discoverNode(sensorNode,actuator){
-    connectedNode='';
+    //connectedNode='';
     var sensorNodeTemp=new Array(sensorNode.length);
+    if(sensornodeQuantity<sensorNodeTemp.length){
+        for(sensornodeQuantity;sensornodeQuantity<sensorNodeTemp.length;sensornodeQuantity++){
+            var type='';
+            sensorNodeTemp[sensornodeQuantity]=sensorNode[sensornodeQuantity];
+            delete sensorNodeTemp[sensornodeQuantity].wakeup;
+
+            for(var j=0;j<(sensorNodeTemp[sensornodeQuantity].TYPE.length);j++){
+
+                if(type===''){
+                    type=type+sensorNodeTemp[sensornodeQuantity].TYPE[j]+'_0';
+                }
+                else{
+                    type=type+','+sensorNodeTemp[sensornodeQuantity].TYPE[j]+'_0';
+                }
+
+            }
+            delete sensorNodeTemp[sensornodeQuantity].TYPE;
+            sensorNodeTemp[sensornodeQuantity].TYPE=type;
+
+            if(connectedNode===''){
+                connectedNode=JSON.stringify(sensorNodeTemp[sensornodeQuantity]);
+            }
+            else{
+                connectedNode=connectedNode+','+JSON.stringify(sensorNodeTemp[sensornodeQuantity]);
+            }
+        
+    }
+        
+    }
+    if(actuatorQuantity<actuator.length){
+        for(actuatorQuantity;i<actuator.length;i++){
+        var type='';
+        
+        for(var j=0;j<(actuator[actuatorQuantity].TYPE.length);j++){
+            if(type===''){
+                type=type+actuator[actuatorQuantity].TYPE[j];
+            }
+            else{
+                type=type+','+actuator[actuatorQuantity].TYPE[j];
+            }
+            
+        }
+        delete actuator[actuatorQuantity].TYPE;
+        actuator[actuatorQuantity].TYPE=type;
+        
+        if(connectedNode===''){
+            connectedNode=JSON.stringify(actuator[actuatorQuantity]);
+        }
+        else{
+            connectedNode=connectedNode+','+JSON.stringify(actuator[actuatorQuantity]);
+        }
+    }
+        
+        
+        
+    }
     
-    for(var i=0;i<sensorNodeTemp.length;i++){
-        sensorNodeTemp[i]=sensorNode[i];
-        delete sensorNodeTemp[i].wakeup;
-        
-        if(connectedNode===''){
-            connectedNode=JSON.stringify(sensorNodeTemp[i]);
-        }
-        else{
-            connectedNode=connectedNode+','+JSON.stringify(sensorNodeTemp[i]);
-        }
-        
-    }
-    for(var i=0;i<actuator.length;i++){
-        if(connectedNode===''){
-            connectedNode=JSON.stringify(actuator[i]);
-        }
-        else{
-            connectedNode=connectedNode+','+JSON.stringify(actuator[i]);
-        }
-    }
+    
     
     
    

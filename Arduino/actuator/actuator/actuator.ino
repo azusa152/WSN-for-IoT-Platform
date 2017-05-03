@@ -3,9 +3,13 @@
 #include <TrueRandom.h>
 #include <XBee.h>
 
+//////////////////////relay setting
+const int relayPin = 10;                 // 繼電器(Relay)
+int relayState = 0;                      // 繼電器狀態
+
 //////////////////////ARDUINO CONFIG 
 const byte kLedPin = 13; 
-const String kNodeType ="[1]";
+const int kNodeType []={1};
 
 //////////////////////GATEWAY CONFIG
 boolean cordinator_flag=false;
@@ -20,6 +24,7 @@ ZBRxResponse zbRx = ZBRxResponse();
 void setup() {
   Serial.begin(9600); 
   pinMode(kLedPin, OUTPUT);
+  pinMode(relayPin, OUTPUT); 
 }
  
 void loop() 
@@ -44,7 +49,7 @@ xbee.readPacket();
       if(cordinator_flag!=true)  //if first time detected gateway
       {
         switch (command){
-          case 0:
+          case 1:
                   BlinkLed(1);
                   cordinator_flag=true;
                   cordinator_low_address=zbRx.getRemoteAddress64().getLsb();
@@ -60,15 +65,16 @@ xbee.readPacket();
          
          switch (command){
          
-          case 1:
-                  BlinkLed(command);
-                  break;
           case 2:
-                  BlinkLed(command); 
+            
+                  digitalWrite(relayPin, 1);  
+                  BlinkLed(command);
                   break;
           case 3:
-                  
-                  BlinkLed(command);
+ 
+                  digitalWrite(relayPin, 0);  
+                   BlinkLed(command);
+                 
                   break;
           case 4:
                   BlinkLed(command);
@@ -92,13 +98,20 @@ xbee.readPacket();
 void ConfirmGateway()
 {
    XBeeAddress64 addr64 = XBeeAddress64(cordinator_high_address, cordinator_low_address); // xbee address
+   StaticJsonBuffer<200> jsonBuffer;
+   JsonObject& root = jsonBuffer.createObject();
+   root["E"]=0;
    
-   String trans_data="{\"Type\":";
-   trans_data.concat(kNodeType);
-   trans_data.concat(",\"E\":");
-   trans_data.concat("0");
-   trans_data.concat("} ");
+   JsonArray& TYPE = root.createNestedArray("TYPE");
+        for(int i=0;i<sizeof(kNodeType)/2;i++){
+          TYPE.add(kNodeType[i]);
+        }
     
+   String trans_data;
+   root.printTo(trans_data);
+   trans_data=trans_data+" ";
+
+   //xbee trans data
    uint8_t trans_data_array[trans_data.length()];
    trans_data.toCharArray(trans_data_array, trans_data.length());
    ZBTxRequest zbTx = ZBTxRequest(addr64, trans_data_array, sizeof(trans_data_array));

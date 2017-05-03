@@ -1,6 +1,6 @@
 "use strict" ;
 var cfg = require("./utl/cfg-app-platform.js")() ;   
-//cfg.identify() ;     
+   
 if( !cfg.test() ) {
     process.exit(1) ;
 }

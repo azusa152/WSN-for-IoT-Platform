@@ -4,11 +4,14 @@ var SerialPort = require('serialport');
 var xbee_api = require('xbee-api');
 const nodeFunction=require('./nodeFunction');
 const frameProcess=require('./frameProcess');
-const openSerialPPort=require('./openSerial');
+//const openSerialPPort=require('./openSerial');
 const transDataProcess=require('./transDataProcess');
 var dateFormat = require('dateformat');
+const http = require('http');
+const url = require('url');
+
 /////////////////////////////////serial port bug fix
-openSerialPPort.openMySerialPort();
+//openSerialPPort.openMySerialPort();
 
 /////////////////////////////////xbee setting
 var xbeeAPI = new xbee_api.XBeeAPI({
@@ -35,36 +38,34 @@ var sensorNode=[];
 var actuator=[];
 var sensorData=[];
 var connectedNode='';
-var sensorWorkTime=4; //sensor 醒來使work 5秒
-
+var sensorWorkTime=4; //sensor ¿ô¨Ó¨Ïwork 5¬í
+var trans_start;
+//clearInterval(trans_start);
 /////////////////////////////////emergency setting
 var emergencyFlag=Boolean(false);
 var recoverFlag=Boolean(false);
 
 ////////////////////////////////ip setting
-var ponte_ip="134.208.3.210:1883";
+var ponte_ip='134.208.3.210';
 var gateway_ip="192.168.1.128";
-var dataCounter=0;
+var dataCounter=1;
+var protocal_flag=0; //http=0;coap=1;mqtt=2
+var trans_frequency=30000;
 
 ///////////////////////////////////////////////////////////////////////////////COAP
-//////coap server
-
 /*
 const coap  = require('coap')
-  , server = coap.createServer({
+  , coap_server = coap.createServer({
     host: '192.168.1.128',
-  }), port = 5683
+  })
 
-
-
-
-server.on('request', function(msg, res) {
-    var path =msg.url;       //將收到的位置(path)拿出來比對 
-    var ip2=JSON.stringify(msg.rsinfo);//讀取ponte IP
-    var ip = JSON.parse(ip2.toString());//轉成json格式讀出IP
+coap_server.on('request', function(msg, res) {
+    var path =msg.url;       //±N¦¬¨ìªº¦ì¸m(path)®³¥X¨Ó¤ñ¹ï 
+    var ip2=JSON.stringify(msg.rsinfo);//Åª¨úponte IP
+    var ip = JSON.parse(ip2.toString());//Âà¦¨json®æ¦¡Åª¥XIP
     var discovery='/'+gateway_ip+'/sevice_discovery';
 
-    switch (path) {       //根據不同的path做不同的事情
+    switch (path) {       //®Ú¾Ú¤£¦Pªºpath°µ¤£¦Pªº¨Æ±¡
         case discovery:
             ponte_ip=ip.address;
 
@@ -81,98 +82,26 @@ server.on('request', function(msg, res) {
                 }, 2000);
             break;
             
-        case 'gateway_ip/TV_ON':
-            frame_obj.data="{\"Command\":1}";
-            serialport.write(xbeeAPI.buildFrame(frame_obj));
-            console.log(path);
-            break;
-            
-        case 'gateway_ip/light_ON':
-            frame_obj.data="{\"Command\":2}";
-            serialport.write(xbeeAPI.buildFrame(frame_obj));
-            console.log(path);
-            break;
-            
-        case 'gateway_ip/TV_OFF':
-           
-            frame_obj.data="{\"Command\":3}";
-            serialport.write(xbeeAPI.buildFrame(frame_obj));
-            console.log(path);
-            
-            break;
-        case 'gateway_ip/light_OFF':
-            frame_obj.data="{\"Command\":4}";
-            serialport.write(xbeeAPI.buildFrame(frame_obj));
-            console.log(path);
-            break;
+        
+       default:
+            console.log('error');
+            break;      
+       
           
             }
     
   
 })
-server.listen(5683, function() {
-  console.log('Server is listening')
+coap_server.listen(5683, function() {
+  console.log('COAP is running')
 })
-
-if(ponte_ip!==""){
-    setTimeout(function() {
-        frame_obj.data='{\"Command\":1}';
-        frame_obj.destination64='000000000000ffff'; //broadcast
-        serialport.write(xbeeAPI.buildFrame(frame_obj));
-                }, 2000);
-   
-       
-put_sensor_data(sensorData);//切好sensor data都要執行這個方法,送出sensor data
-}
-
-function put_sensor_data(sensor_data){
-    
-   var start=setInterval(put_sensor_data_to_ponte,30000,sensor_data);
-}
-
-function put_sensor_data_to_ponte(payload){
-    var now = new Date();
-    dataCounter++;
-    payload.push(dateFormat(now, "isoDateTime"));
-    //console.log(JSON.stringify(payload));
-    var sensor_data_topic=gateway_ip;
-    var req = coap.request({
-     host:ponte_ip,//ponte_ip
-     port:5683,
-     method:'put',
-     pathname:'/r/'+sensor_data_topic
-    });
-    //console.log(payload.DATA);
-    req.write(JSON.stringify(payload));
-    req.on('response', function(res) {
-    res.pipe(process.stdout)
-    req.on('end', function() {
-    res.pipe('end')
-});
-
-});
-  
-console.log(dateFormat(now, "h:MM:ss.l"));
-sensorData.length=0;
-req.end()
-}
 */
-//////////////////////////////////////////////////////////////////////////////////////////////COAP
-
 //////////////////////////////////////////////////////////////////////////////////////////////HTTP
-/*
-var server,
-    ip   = "192.168.1.128",//gateway自己的IP
-    port = 3001,
-    http = require('http'),
-    url = require('url'),
-    path;
-
 
 server = http.createServer(function (req, res) {
       path = url.parse(req.url);
       var ip='';
-      var ip2 = req.connection.remoteAddress;//讀取ponte的IP
+      var ip2 = req.connection.remoteAddress;//Åª¨úponteªºIP
       for(var i=7;i<ip2.length;i++){
       ip=ip+ip2[i];
       }
@@ -209,36 +138,67 @@ server = http.createServer(function (req, res) {
             console.log(path.pathname);
             break;
             
-     case 'gateway_ip/OFF':
-           
-            if(actuator.length>0){
-                 frame_obj.data="{\"Command\":3}";
-                frame_obj.destination64=actuator[0].UUID;
-                serialport.write(xbeeAPI.buildFrame(frame_obj));
-                res.end('OFF');
-            }
-            
-            res.end('NO ACTUATOR');
-            console.log(path.pathname);
-            
+        default:
+            console.log('error');
             break;
-       
-    default:
-        res.end('default page.\n');
-        break;
+            
     }
-   // res.end()
 });
-server.listen(port, function() {
-console.log("Server running at http://" + ip + ":" + port);
-
+server.listen(3001, function() {
+console.log('HTTP is running');
 });
 
+///////////////////////////////////////////////////////////////////// MQTT
+/*
+var mqtt   = require('mqtt'); 
+
+var client = mqtt.connect('mqtt://'+ponte_ip +':1883');
+
+var sevice_discovery_topic = gateway_ip+'/sevice_discovery';
+
+client.on('connect', function () {
+   client.subscribe(sevice_discovery_topic);
+   console.log('MQTT is running')
+});
+/*
+client.on('message', function (topic, message) {
+  // message is Buffer
+  console.log(message.toString());
+    //sendURL(discovery_data);//©I¥s¤èªk°e¥XURL
+    frame_obj.data='{\"Command\":1}';
+    frame_obj.destination64='000000000000ffff'; //broadcast
+    serialport.write(xbeeAPI.buildFrame(frame_obj));
+    nodeFunction.doDiscoverNode(sensorNode,actuator);
+
+    setTimeout(function() {
+        connectedNode=nodeFunction.getConnectedNode();
+        console.log('>>'+connectedNode);
+            
+        var ip=gateway_ip;//gateway IP
+        var topic=ip+'/discovery_url';
+        var payload=connectedNode;
+        var client =mqtt.connect('mqtt://'+ponte_ip);//ponte ip
+        client.publish(topic,JSON.stringify(connectedNode),{retain:true});
+       
+          
+            }, 2000);
+});
+//°e¥XURL
+function sendURL(payloads){
+var ip=gateway_ip;//gateway IP
+var topic=ip+'/discovery_url';
+var payload=payloads;
+var client =mqtt.connect('mqtt://'+ponte_ip);//ponte ip
+client.publish(topic,JSON.stringify(payloads),{
+  retain:true
+})
+console.log(payloads);
+}
+*/
 
 
-
-//向ponte送出sensors data
-if(ponte_ip!==""){
+////////////////////////////////////////////////////////////////////
+if(ponte_ip!=''){
     setTimeout(function() {
         frame_obj.data='{\"Command\":1}';
         frame_obj.destination64='000000000000ffff'; //broadcast
@@ -246,25 +206,61 @@ if(ponte_ip!==""){
                 }, 2000);
    
        
-put_sensor_data(sensorData);//切好sensor data都要執行這個方法,送出sensor data
+put_sensor_data(sensorData);//¤Á¦nsensor data³£­n°õ¦æ³o­Ó¤èªk,°e¥Xsensor data
 }
 
 function put_sensor_data(sensor_data){
     
-   var start=setInterval(put_sensor_data_to_ponte,30000,sensor_data);
+        switch(protocal_flag){
+        case 0:
+            trans_start=setInterval(http_put_sensor_data_to_ponte,trans_frequency,sensor_data);
+            break;
+
+         case 1:
+            trans_start=setInterval(coap_put_sensor_data_to_ponte,trans_frequency,sensor_data);
+            break;
+
+         case 2:
+            trans_start=setInterval(mqtt_put_sensor_data_to_ponte,trans_frequency,sensor_data);
+            break;
+
+    }
+   
 }
 
+function coap_put_sensor_data_to_ponte(payload){
+    var now = new Date();
+    dataCounter++;
+    payload.push(dateFormat(now, "isoDateTime"));
 
+    var sensor_data_topic=gateway_ip;
+    var req = coap.request({
+     host:ponte_ip,//ponte_ip
+     port:5683,
+     method:'put',
+     pathname:'/r/'+sensor_data_topic
+    });
+    //console.log(payload.DATA);
+    req.write(JSON.stringify(payload));
+    req.on('response', function(res) {
+    res.pipe(process.stdout)
+    req.on('end', function() {
+    res.pipe('end')
+});
 
+});
+  
+console.log(dateFormat(now, "h:MM:ss.l"));
+sensorData.length=0;
+req.end()
+}
 
-//向ponte送出sensors data
-function put_sensor_data_to_ponte(payload){
+function http_put_sensor_data_to_ponte(payload){
     var now = new Date();
     dataCounter++;
     payload.push(dateFormat(now, "isoDateTime"));
 
     var sensor_data_topic=gateway_ip;   
-
     var options = {
         "host":ponte_ip, //ponte_ip
         "port":3001,
@@ -285,102 +281,27 @@ function put_sensor_data_to_ponte(payload){
     
     var body=JSON.stringify(payload);
     http.request(options, callback).end(body);
-    if(dataCounter>100){
-        server.close();
-    }
     console.log(dateFormat(now, "h:MM:ss.l"));
     sensorData.length=0;
-}
-*/
-////////////////////////////////////////////////////////////////////HTTP
 
-///////////////////////////////////////////////////////////////////// MQTT
-
-var mqtt   = require('mqtt'); 
-
-var client = mqtt.connect('mqtt://'+ponte_ip);
-
-var sevice_discovery_topic = gateway_ip+'/sevice_discovery';
-client.on('connect', function () {
-   client.subscribe(sevice_discovery_topic);
-   console.log('Server is listening')
-});
-
-client.on('message', function (topic, message) {
-  // message is Buffer
-  console.log(message.toString());
-    //sendURL(discovery_data);//呼叫方法送出URL
-    frame_obj.data='{\"Command\":1}';
-    frame_obj.destination64='000000000000ffff'; //broadcast
-    serialport.write(xbeeAPI.buildFrame(frame_obj));
-    nodeFunction.doDiscoverNode(sensorNode,actuator);
-
-    setTimeout(function() {
-        connectedNode=nodeFunction.getConnectedNode();
-        console.log('>>'+connectedNode);
-            
-        var ip=gateway_ip;//gateway IP
-        var topic=ip+'/discovery_url';
-        var payload=connectedNode;
-        var client =mqtt.connect('mqtt://'+ponte_ip);//ponte ip
-        client.publish(topic,JSON.stringify(connectedNode),{retain:true});
-       
-          
-            }, 2000);
-});
-//送出URL
-function sendURL(payloads){
-var ip=gateway_ip;//gateway IP
-var topic=ip+'/discovery_url';
-var payload=payloads;
-var client =mqtt.connect('mqtt://'+ponte_ip);//ponte ip
-client.publish(topic,JSON.stringify(payloads),{
-  retain:true
-})
-console.log(payloads);
 }
 
-
-//put sensorsdata
-
-if(ponte_ip!==""){
-    setTimeout(function() {
-        frame_obj.data='{\"Command\":1}';
-        frame_obj.destination64='000000000000ffff'; //broadcast
-        serialport.write(xbeeAPI.buildFrame(frame_obj));
-                }, 2000);
-   
-       
-put_sensor_data(sensorData);//切好sensor data都要執行這個方法,送出sensor data
-}
-
-function put_sensor_data(sensor_data){
-    
-   var start=setInterval(put_sensor_data_to_ponte,30000,sensor_data);
-}
-
-
-//put sensorsdata
-
-function put_sensor_data_to_ponte(payloads){
+function mqtt_put_sensor_data_to_ponte(payloads){
 var ip=gateway_ip;//gateway ip
 var topic=ip;//sensordata topic
 var now = new Date();
 dataCounter++;
 payloads.push(dateFormat(now, "isoDateTime"));
-var client =mqtt.connect('mqtt://'+ponte_ip);
+var client =mqtt.connect('mqtt://'+ponte_ip+':1883');
 client.publish(topic,JSON.stringify(payloads),{
   retain:true
 })
 
-
-  
     console.log(dateFormat(now, "h:MM:ss.l"));
+    
     sensorData.length=0;
+
 }
-
-////////////////////////////////////////////////////////////////////
-
 
 
 
@@ -390,8 +311,6 @@ xbeeAPI.on('frame_object', function (frame) {
     
 
     if(frame.type===139) {  // transmit
-         
-      
         }
     
     
@@ -412,12 +331,12 @@ xbeeAPI.on('frame_object', function (frame) {
                     var sensorNodeNumber=nodeFunction.findNode(sensorNode,receiveData);
                     
                     if(sensorNodeNumber===-1){     //not found
-                        console.log('>> fail ,not registered (normal)');
+                       // console.log('>> fail ,not registered (normal)');
                         
                     }
                     else{
-                        console.log('>> receive sensor data');
-                        // node 醒來 ，X秒後睡覺
+                        //console.log('>> receive sensor data');
+                        // node ¿ô¨Ó ¡AX¬í«áºÎÄ±
                         sensorNode[sensorNodeNumber].wakeup=true;
                         setTimeout(function(){sensorNode[sensorNodeNumber].wakeup=false},sensorWorkTime*1000);
                         
@@ -449,11 +368,11 @@ xbeeAPI.on('frame_object', function (frame) {
                     var sensorNodeNumber=nodeFunction.findNode(sensorNode,receiveData);
                     
                     if(sensorNodeNumber===-1){     //not found
-                        console.log('>> fail ,not registered(emergence) ');
+                        //console.log('>> fail ,not registered(emergence) ');
                         
                     }
                     else{
-                        console.log('>> receive emergence');
+                       // console.log('>> receive emergence');
                         if(recoverFlag===true){
                             frame_obj.data='{\"Command\":200}';
                             frame_obj.destination64=frame.remote64; //broadcast
