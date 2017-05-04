@@ -97,10 +97,10 @@ coap_server.on('request', function(msg, res) {
 })
 
 coap_server.listen(5683, function() {
-  console.log('Server is listening')
+  console.log('coap is running')
 })
-
 */
+
 //////////////////////////////////////////////////////////////////////////////////////////////HTTP
 /*
 server = http.createServer(function (req, res) {
@@ -184,10 +184,16 @@ client.on('message', function (topic, message) {
     console.log(message.toString());
   }else{
     var payloadJSON=JSON.parse(message.toString());
+      console.log('????:>'+message.toString());
     console.log(payloadJSON.will_message);
+      
     if(payloadJSON.will_message==="null"){
 
-    }else{
+    }
+    else{
+        var ip=gateway_uuid;//gateway IP
+        var topic=ip+'/discovery_response';
+        
         frame_obj.data='{\"Command\":1}';
         frame_obj.destination64='000000000000ffff'; //broadcast
         serialport.write(xbeeAPI.buildFrame(frame_obj));
@@ -196,8 +202,7 @@ client.on('message', function (topic, message) {
         setTimeout(function() {
             connectedNode=nodeFunction.getConnectedNode();
             console.log('>>'+connectedNode);
-            var ip=gateway_ip;//gateway IP
-            var topic=ip+'/discovery_response';
+            
            
             
             var payload={
@@ -208,7 +213,10 @@ client.on('message', function (topic, message) {
             
             
             var client =mqtt.connect('mqtt://'+ponte_ip+':1883');//ponte ip
-            client.publish(topic,payload,{retain:true});
+            client.publish(topic,JSON.stringify(payload),{
+  retain:true
+})
+            client.end();
             console.log(payload);
             }, 2000);
         
@@ -218,6 +226,7 @@ client.on('message', function (topic, message) {
   }
 
 });
+
 
 
 
