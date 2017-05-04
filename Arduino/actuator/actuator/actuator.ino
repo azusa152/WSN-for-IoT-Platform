@@ -64,7 +64,14 @@ xbee.readPacket();
       else if (zbRx.getRemoteAddress64().getLsb() ==cordinator_low_address) {    
          
          switch (command){
-         
+          case 1:
+                  BlinkLed(1);
+                  cordinator_flag=true;
+                  cordinator_low_address=zbRx.getRemoteAddress64().getLsb();
+                  delay(TrueRandom.random(1,500));// avoid collision
+                  ConfirmGateway();// to confirm this node to gateway
+                  break;
+
           case 2:
             
                   digitalWrite(relayPin, 1);  

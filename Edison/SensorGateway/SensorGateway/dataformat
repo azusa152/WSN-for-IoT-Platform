@@ -24,11 +24,3 @@
         MTkyLjE2OC4xLjEyOA/0013a20040c8d185/1001/1
         
 MQTT :{"data":"MTkyLjE2OC4xLjEyOA/0013a20040694fa0/1002/1"}
-
-{ discovery_data: '{{"UUID":"0013a20040694fa0","SLEEP_MODE":1,"TYPE":"1001_0,1002_0"}}',
-  user_data: 
-   { IP: '192.168.1.128',
-     protocol: 'mqtt',
-     actuatorName: 'test',
-     actuatorOwner: 'j19930913@yahoo.com.tw',
-     actuatorSpace: 'test' } }

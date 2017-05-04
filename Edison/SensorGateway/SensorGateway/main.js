@@ -102,7 +102,7 @@ coap_server.listen(5683, function() {
 */
 
 //////////////////////////////////////////////////////////////////////////////////////////////HTTP
-/*
+
 server = http.createServer(function (req, res) {
     path = url.parse(req.url);
     var ponte_address='';
@@ -136,9 +136,7 @@ server = http.createServer(function (req, res) {
      case '/'+gateway_uuid+"/Actuator":
            
             if(actuator.length>0){
-                frame_obj.data="{\"Command\":1}";
-                frame_obj.destination64=actuator[0].UUID;
-                serialport.write(xbeeAPI.buildFrame(frame_obj));
+                
                 res.end('ON');
             }
             var bodydata = '';
@@ -148,8 +146,36 @@ server = http.createServer(function (req, res) {
 
             req.on('end', function () {
                 console.log(bodydata);//MTkyLjE2OC4xLjEyOA/0013a20040c8d185/1001/1
-                var Actuator=bodydata;//web端送過來{'data':192.168.1.140/oxoxoxoxoxox/36}SG_IP/UUID
-                //可在這裡加上function並結合Actuator去做控制
+                
+                var bodySplit = bodydata.toString().split("/"); 
+                var ActuatorUUID=bodySplit[1];
+                var ActuatorTIPE=bodySplit[2];
+                var ActuatorACTION=bodySplit[3];
+                
+                var ActuatorNUMBER=nodeFunction.findNode(actuator,ActuatorUUID);
+                if(ActuatorNUMBER!=-1){
+                    switch(ActuatorTIPE){
+                        case '1': //lamp
+                            console.log("lamp");
+                            if(ActuatorACTION==='1"'){
+                                frame_obj.data="{\"Command\":2}";
+                                frame_obj.destination64=ActuatorUUID;
+                                serialport.write(xbeeAPI.buildFrame(frame_obj));
+                                console.log("on");
+                                console.log(ActuatorUUID);
+                                console.log(ActuatorACTION);
+                            }
+                            else if(ActuatorACTION==='0"'){
+                                frame_obj.data="{\"Command\":3}";
+                                frame_obj.destination64=ActuatorUUID;
+                                serialport.write(xbeeAPI.buildFrame(frame_obj));
+                                console.log("off");
+                                console.log(ActuatorUUID);
+                                console.log(ActuatorACTION);
+                            }
+                    }
+                }
+                
             });
 
         break;
@@ -163,9 +189,9 @@ server = http.createServer(function (req, res) {
 server.listen(3001, function() {
 console.log('HTTP is running');
 });
-*/
+
 ///////////////////////////////////////////////////////////////////// MQTT
- 
+ /*
 var mqtt   = require('mqtt'); 
 var client = mqtt.connect('mqtt://'+ponte_ip +':1883');
 
@@ -184,7 +210,7 @@ client.on('message', function (topic, message) {
     console.log(message.toString());
   }else{
     var payloadJSON=JSON.parse(message.toString());
-      console.log('????:>'+message.toString());
+     
     console.log(payloadJSON.will_message);
       
     if(payloadJSON.will_message==="null"){
@@ -228,7 +254,7 @@ client.on('message', function (topic, message) {
 });
 
 
-
+*/
 
 ////////////////////////////////////////////////////////////////////
 /* 
@@ -362,7 +388,7 @@ xbeeAPI.on('frame_object', function (frame) {
                 //receive sensor data
                 case 1:
                     delete receiveData.E; 
-                    var sensorNodeNumber=nodeFunction.findNode(sensorNode,receiveData);
+                    var sensorNodeNumber=nodeFunction.findNode(sensorNode,receiveData.UUID);
                     
                     if(sensorNodeNumber===-1){     //not found
                        // console.log('>> fail ,not registered (normal)');
@@ -399,7 +425,7 @@ xbeeAPI.on('frame_object', function (frame) {
                 //receive emergency
                 case 2:
                     delete receiveData.E; 
-                    var sensorNodeNumber=nodeFunction.findNode(sensorNode,receiveData);
+                    var sensorNodeNumber=nodeFunction.findNode(sensorNode,receiveData.UUID);
                     
                     if(sensorNodeNumber===-1){     //not found
                         //console.log('>> fail ,not registered(emergence) ');
@@ -423,7 +449,7 @@ xbeeAPI.on('frame_object', function (frame) {
                     
                 case 3:
                     delete receiveData.E; 
-                    var sensorNodeNumber=nodeFunction.findNode(sensorNode,receiveData);
+                    var sensorNodeNumber=nodeFunction.findNode(sensorNode,receiveData.UUID);
                     
                     if(sensorNodeNumber===-1){     //not found
                         console.log('>> fail ,not registered ');

@@ -182,6 +182,15 @@ xbee.readPacket();
       else if (zbRx.getRemoteAddress64().getLsb() ==cordinator_low_address) {    
          switch (command){
           //receive start emergence command
+          case 1:
+            BlinkLed(1);
+            cordinator_flag=true;
+            cordinator_low_address=zbRx.getRemoteAddress64().getLsb();
+            delay(TrueRandom.random(1,500));// avoid collision
+            TransData(0);// to confirm this node to gateway
+            ResetSleep();
+            break;      
+            
           case 100:
             BlinkLed(1);
             if(emergency_flag==false&&recover_flag==false){

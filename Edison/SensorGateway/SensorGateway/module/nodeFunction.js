@@ -2,6 +2,7 @@
 var connectedNode='';
 var sensornodeQuantity=0;
 var actuatorQuantity=0;
+var sensor_flag=false;
 // sensor 及 actuator 處存格式
 function NodeStruct(receiveData,sensor_flag) {
    
@@ -22,7 +23,7 @@ function NodeStruct(receiveData,sensor_flag) {
 // check node is recored or not
 exports.checkNode =function checkNode(sensorNode,actuator,receiveData){
     //type <100:sensor ; >100 actuator
-    
+    sensor_flag=false;
     for(var i=0;i<receiveData.TYPE.length;i++){
       
         if(receiveData.TYPE[i]>1000){
@@ -33,12 +34,14 @@ exports.checkNode =function checkNode(sensorNode,actuator,receiveData){
      if(sensor_flag===true){
          for(var i=0;i<sensorNode.length;i++){
          if(sensorNode[i].UUID===receiveData.UUID){
+             sensorNode[i].UUID = receiveData.UUID;
+             sensorNode[i].TYPE=receiveData.TYPE;
+             sensorNode[i].SLEEP_MODE=receiveData.SM;
+             console.log('>> sensorNode updated');
              return;
             }
          }
          console.log('>> sensor register');
-         
-         
          sensorNode.push(new NodeStruct(receiveData,sensor_flag));
         
          return;
@@ -47,6 +50,9 @@ exports.checkNode =function checkNode(sensorNode,actuator,receiveData){
      else{
          for(var i=0;i<actuator.length;i++){
          if(actuator[i].UUID===address){
+             actuator[i].UUID = receiveData.UUID;
+             actuator[i].TYPE=receiveData.TYPE;
+             console.log('>> actuator updated');
              return;
             }
          }
@@ -55,15 +61,15 @@ exports.checkNode =function checkNode(sensorNode,actuator,receiveData){
          return;
          
      }
-     console.log('>> already registered ');
+     
 }
 
 
 //find which node send data，return node number ,if not found return -1 
-exports.findNode= function (node,receiveData){
+exports.findNode= function (node,UUID){
      
     for(var i=0;i<node.length;i++){
-         if(node[i].UUID===receiveData.UUID){
+         if(node[i].UUID===UUID){
              return i;
          }
      }
@@ -107,15 +113,16 @@ function discoverNode(sensorNode,actuator){
         
     }
     if(actuatorQuantity<actuator.length){
-        for(actuatorQuantity;i<actuator.length;i++){
+        
+        for(actuatorQuantity;actuatorQuantity<actuator.length;actuatorQuantity++){
         var type='';
         
         for(var j=0;j<(actuator[actuatorQuantity].TYPE.length);j++){
             if(type===''){
-                type=type+actuator[actuatorQuantity].TYPE[j];
+                type=type+actuator[actuatorQuantity].TYPE[j]+'_0';
             }
             else{
-                type=type+','+actuator[actuatorQuantity].TYPE[j];
+                type=type+','+actuator[actuatorQuantity].TYPE[j]+'_0';
             }
             
         }
