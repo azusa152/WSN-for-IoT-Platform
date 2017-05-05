@@ -87,9 +87,33 @@ coap_server.on('request', function(msg, res) {
             break;
               
         case '/'+gateway_uuid+'/Actuator':
-            var Actuator=""+msg.payload;
-            console.log(Actuator);//web端送過來192.168.1.143/oxoxoxoxoxoxoxo SG_IP/UUID
-             //可在這裡加上function並結合Actuator去做控制
+            var bodydata=""+msg.payload;
+            //format:MTkyLjE2OC4xLjEyOA/0013a20040c8d185/1001/1
+            var bodySplit = bodydata.toString().split("/"); 
+            var ActuatorUUID=bodySplit[1];
+            var ActuatorTIPE=bodySplit[2];
+            var ActuatorACTION=bodySplit[3];
+              
+            var ActuatorNUMBER=nodeFunction.findNode(actuator,ActuatorUUID);
+                if(ActuatorNUMBER!=-1){
+                    switch(ActuatorTIPE){
+                        case '1': //lamp
+                            if(ActuatorACTION==='1"'){
+                                frame_obj.data="{\"Command\":2}";
+                                frame_obj.destination64=ActuatorUUID;
+                                serialport.write(xbeeAPI.buildFrame(frame_obj));
+                                console.log(">>lamp on");
+                               
+                            }
+                            else if(ActuatorACTION==='0"'){
+                                frame_obj.data="{\"Command\":3}";
+                                frame_obj.destination64=ActuatorUUID;
+                                serialport.write(xbeeAPI.buildFrame(frame_obj));
+                                console.log(">>lamp off");
+                               
+                            }
+                    }
+                }
             break;
 
     }
@@ -99,10 +123,10 @@ coap_server.on('request', function(msg, res) {
 coap_server.listen(5683, function() {
   console.log('coap is running')
 })
+
 */
-
 //////////////////////////////////////////////////////////////////////////////////////////////HTTP
-
+/*
 server = http.createServer(function (req, res) {
     path = url.parse(req.url);
     var ponte_address='';
@@ -145,7 +169,7 @@ server = http.createServer(function (req, res) {
             });
 
             req.on('end', function () {
-                console.log(bodydata);//MTkyLjE2OC4xLjEyOA/0013a20040c8d185/1001/1
+                //format:MTkyLjE2OC4xLjEyOA/0013a20040c8d185/1001/1
                 
                 var bodySplit = bodydata.toString().split("/"); 
                 var ActuatorUUID=bodySplit[1];
@@ -156,22 +180,19 @@ server = http.createServer(function (req, res) {
                 if(ActuatorNUMBER!=-1){
                     switch(ActuatorTIPE){
                         case '1': //lamp
-                            console.log("lamp");
                             if(ActuatorACTION==='1"'){
                                 frame_obj.data="{\"Command\":2}";
                                 frame_obj.destination64=ActuatorUUID;
                                 serialport.write(xbeeAPI.buildFrame(frame_obj));
-                                console.log("on");
-                                console.log(ActuatorUUID);
-                                console.log(ActuatorACTION);
+                                console.log(">>lamp on");
+                               
                             }
                             else if(ActuatorACTION==='0"'){
                                 frame_obj.data="{\"Command\":3}";
                                 frame_obj.destination64=ActuatorUUID;
                                 serialport.write(xbeeAPI.buildFrame(frame_obj));
-                                console.log("off");
-                                console.log(ActuatorUUID);
-                                console.log(ActuatorACTION);
+                                console.log(">>lamp off");
+                               
                             }
                     }
                 }
@@ -189,9 +210,9 @@ server = http.createServer(function (req, res) {
 server.listen(3001, function() {
 console.log('HTTP is running');
 });
-
+*/
 ///////////////////////////////////////////////////////////////////// MQTT
- /*
+ 
 var mqtt   = require('mqtt'); 
 var client = mqtt.connect('mqtt://'+ponte_ip +':1883');
 
@@ -201,24 +222,53 @@ var Actuator_topic = gateway_uuid+'/Actuator';
 client.on('connect', function () {
    client.subscribe(sevice_discovery_topic);
    client.subscribe(Actuator_topic);
-   console.log('MQTT is running')
+   console.log('MQTT is running');
+
 });
+
+
 client.on('message', function (topic, message) {
   // message is Buffer
-  console.log(topic);
   if(topic===Actuator_topic){
-    console.log(message.toString());
-  }else{
+    var parse =JSON.parse(message.toString());
+    var bodydata=parse.data;
+    
+    var bodySplit = bodydata.toString().split("/"); 
+    var ActuatorUUID=bodySplit[1];
+    var ActuatorTIPE=bodySplit[2];
+    var ActuatorACTION=bodySplit[3];
+                
+    var ActuatorNUMBER=nodeFunction.findNode(actuator,ActuatorUUID);
+    if(ActuatorNUMBER!=-1){
+        switch(ActuatorTIPE){
+            case '1': //lamp
+                if(ActuatorACTION==='1'){
+                    frame_obj.data="{\"Command\":2}";
+                    frame_obj.destination64=ActuatorUUID;
+                    serialport.write(xbeeAPI.buildFrame(frame_obj));
+                    console.log(">>lamp on");    
+                     }
+                
+                else if(ActuatorACTION==='0'){
+                    frame_obj.data="{\"Command\":3}";
+                    frame_obj.destination64=ActuatorUUID;
+                    serialport.write(xbeeAPI.buildFrame(frame_obj));
+                    console.log(">>lamp off");
+                    }
+        }
+    }
+    
+  }
+    
+  else{
     var payloadJSON=JSON.parse(message.toString());
-     
-    console.log(payloadJSON.will_message);
-      
     if(payloadJSON.will_message==="null"){
-
+        // bug avoid
     }
     else{
         var ip=gateway_uuid;//gateway IP
         var topic=ip+'/discovery_response';
+        
         
         frame_obj.data='{\"Command\":1}';
         frame_obj.destination64='000000000000ffff'; //broadcast
@@ -228,22 +278,18 @@ client.on('message', function (topic, message) {
         setTimeout(function() {
             connectedNode=nodeFunction.getConnectedNode();
             console.log('>>'+connectedNode);
-            
-           
-            
+
             var payload={
                 "discovery_data":'{'+connectedNode+'}',
                 "user_data":payloadJSON
             }
-            
-            
-            
+
             var client =mqtt.connect('mqtt://'+ponte_ip+':1883');//ponte ip
             client.publish(topic,JSON.stringify(payload),{
-  retain:true
-})
+              retain:true
+            })
             client.end();
-            console.log(payload);
+            
             }, 2000);
         
 
@@ -254,7 +300,7 @@ client.on('message', function (topic, message) {
 });
 
 
-*/
+
 
 ////////////////////////////////////////////////////////////////////
 /* 

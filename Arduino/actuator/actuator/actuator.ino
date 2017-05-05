@@ -10,7 +10,7 @@ int relayState = 0;                      // 繼電器狀態
 //////////////////////ARDUINO CONFIG 
 const byte kLedPin = 13; 
 const int kNodeType []={1};
-
+int kActuactorState []={0};
 //////////////////////GATEWAY CONFIG
 boolean cordinator_flag=false;
 const long  cordinator_high_address= 0x0013a200;
@@ -75,11 +75,15 @@ xbee.readPacket();
           case 2:
             
                   digitalWrite(relayPin, 1);  
+                  relayState=1;
+                  kActuactorState[0]=1;
                   BlinkLed(command);
                   break;
           case 3:
  
-                  digitalWrite(relayPin, 0);  
+                  digitalWrite(relayPin, 0); 
+                  relayState=0;
+                  kActuactorState[0]=0; 
                    BlinkLed(command);
                  
                   break;
@@ -112,6 +116,11 @@ void ConfirmGateway()
    JsonArray& TYPE = root.createNestedArray("TYPE");
         for(int i=0;i<sizeof(kNodeType)/2;i++){
           TYPE.add(kNodeType[i]);
+        }
+
+   JsonArray& STATE = root.createNestedArray("STATE");
+        for(int i=0;i<sizeof(kActuactorState)/2;i++){
+          STATE.add(kActuactorState[i]);
         }
     
    String trans_data;

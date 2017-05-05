@@ -29,8 +29,8 @@
         "name": "LICENSE.md"
       },
       "main.js": {
-        "previousModTime": 1493889408724,
-        "modified": 1493889408724,
+        "previousModTime": 1493988122390,
+        "modified": 1493988122390,
         "seen": true,
         "name": "main.js"
       },
@@ -53,8 +53,8 @@
         "name": "SensorGateway.xdk"
       },
       "SensorGateway.xdke": {
-        "previousModTime": 1493889403884,
-        "modified": 1493889403884,
+        "previousModTime": 1493988076990,
+        "modified": 1493988076990,
         "seen": true,
         "name": "SensorGateway.xdke"
       },
@@ -77,8 +77,8 @@
         "name": "module/frameProcess.js"
       },
       "module/nodeFunction.js": {
-        "previousModTime": 1493888921227,
-        "modified": 1493888921227,
+        "previousModTime": 1493985971900,
+        "modified": 1493985971900,
         "seen": true,
         "name": "module/nodeFunction.js"
       },
@@ -97,7 +97,7 @@
     },
     "boardFileStatus": {
       "main.js": {
-        "previousModTime": 1493889410423
+        "previousModTime": 1493988124234
       }
     }
   }

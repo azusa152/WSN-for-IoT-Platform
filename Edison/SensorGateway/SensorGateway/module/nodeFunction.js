@@ -14,6 +14,10 @@ function NodeStruct(receiveData,sensor_flag) {
       this.SLEEP_MODE=receiveData.SM;
       this.wakeup=false; 
   }
+    
+  else{
+      this.STATE=receiveData.STATE;
+  }
    
   
 }
@@ -49,7 +53,7 @@ exports.checkNode =function checkNode(sensorNode,actuator,receiveData){
     
      else{
          for(var i=0;i<actuator.length;i++){
-         if(actuator[i].UUID===address){
+         if(actuator[i].UUID===receiveData.UUID){
              actuator[i].UUID = receiveData.UUID;
              actuator[i].TYPE=receiveData.TYPE;
              console.log('>> actuator updated');
@@ -83,6 +87,9 @@ function discoverNode(sensorNode,actuator){
     //connectedNode='';
     
     var sensorNodeTemp=new Array(sensorNode.length);
+    var actuatorTemp=new Array(actuator.length);
+    
+    // sensor node process
     if(sensornodeQuantity<sensorNodeTemp.length){
         for(sensornodeQuantity;sensornodeQuantity<sensorNodeTemp.length;sensornodeQuantity++){
             var type='';
@@ -107,33 +114,35 @@ function discoverNode(sensorNode,actuator){
             }
             else{
                 connectedNode=connectedNode+','+JSON.stringify(sensorNodeTemp[sensornodeQuantity]);
-            }
-        
+            }     
+        }   
     }
+    
+    // actuator process
+    if(actuatorQuantity<actuatorTemp.length){
         
-    }
-    if(actuatorQuantity<actuator.length){
-        
-        for(actuatorQuantity;actuatorQuantity<actuator.length;actuatorQuantity++){
+        for(actuatorQuantity;actuatorQuantity<actuatorTemp.length;actuatorQuantity++){
         var type='';
-        
-        for(var j=0;j<(actuator[actuatorQuantity].TYPE.length);j++){
+        actuatorTemp[actuatorQuantity]=actuator[actuatorQuantity];
+        for(var j=0;j<(actuatorTemp[actuatorQuantity].TYPE.length);j++){
             if(type===''){
-                type=type+actuator[actuatorQuantity].TYPE[j]+'_0';
+                type=type+actuatorTemp[actuatorQuantity].TYPE[j]+'_'+actuatorTemp[actuatorQuantity].STATE;
+                
             }
             else{
-                type=type+','+actuator[actuatorQuantity].TYPE[j]+'_0';
+                type=type+','+actuatorTemp[actuatorQuantity].TYPE[j]+'_'+actuatorTemp[actuatorQuantity].STATE;
             }
             
         }
-        delete actuator[actuatorQuantity].TYPE;
+        delete actuatorTemp[actuatorQuantity].TYPE;
+        delete actuatorTemp[actuatorQuantity].STATE;
         actuator[actuatorQuantity].TYPE=type;
         
         if(connectedNode===''){
-            connectedNode=JSON.stringify(actuator[actuatorQuantity]);
+            connectedNode=JSON.stringify(actuatorTemp[actuatorQuantity]);
         }
         else{
-            connectedNode=connectedNode+','+JSON.stringify(actuator[actuatorQuantity]);
+            connectedNode=connectedNode+','+JSON.stringify(actuatorTemp[actuatorQuantity]);
         }
     }
         
