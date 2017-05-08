@@ -60,15 +60,12 @@ const coap  = require('coap')
   , coap_server = coap.createServer({
     host: '192.168.1.128',
   })
-
 coap_server.on('request', function(msg, res) {
     var path =msg.url;       //將收到的位置(path)拿出來比對
     var ip2=JSON.stringify(msg.rsinfo);//讀取ponte IP
     var ip = JSON.parse(ip2.toString());//轉成json格式讀出IP
-
       switch (path) {       //根據不同的path做不同的事情
         case '/'+gateway_uuid+'/discovery_request':
-
             ponte_ip=ip.address;//ip.address為ponte IP
             frame_obj.data='{\"Command\":1}';
             frame_obj.destination64='000000000000ffff'; //broadcast
@@ -81,7 +78,6 @@ coap_server.on('request', function(msg, res) {
                 connectedNode=nodeFunction.getConnectedNode();
                 connectedNode='{'+connectedNode+'}';
                 console.log('>>'+connectedNode);
-
                 res.end(connectedNode);
             }, 2000);
             break;
@@ -115,15 +111,12 @@ coap_server.on('request', function(msg, res) {
                     }
                 }
             break;
-
     }
   
 })
-
 coap_server.listen(5683, function() {
   console.log('coap is running')
 })
-
 */
 //////////////////////////////////////////////////////////////////////////////////////////////HTTP
 /*
@@ -134,11 +127,9 @@ server = http.createServer(function (req, res) {
     for(var i=7;i<ip2.length;i++){
       ponte_address=ponte_address+ip2[i];
     }
-
     res.writeHead(200, {'Content-Type': 'text/plain'});
     
     var discovery='/'+gateway_ip+'/sevice_discovery';
-
     switch (path.pathname) {
     case '/'+gateway_uuid+'/discovery_request':
         ponte_ip=ponte_address;
@@ -167,7 +158,6 @@ server = http.createServer(function (req, res) {
             req.on('data', function (data) {
                 bodydata += data;
             });
-
             req.on('end', function () {
                 //format:MTkyLjE2OC4xLjEyOA/0013a20040c8d185/1001/1
                 
@@ -198,7 +188,6 @@ server = http.createServer(function (req, res) {
                 }
                 
             });
-
         break;
             
         default:
@@ -314,31 +303,25 @@ if(ponte_ip!=''){
        
 put_sensor_data(sensorData);//
 }
-
 function put_sensor_data(sensor_data){
     
         switch(protocal_flag){
         case 0:
             trans_start=setInterval(http_put_sensor_data_to_ponte,trans_frequency,sensor_data);
             break;
-
          case 1:
             trans_start=setInterval(coap_put_sensor_data_to_ponte,trans_frequency,sensor_data);
             break;
-
          case 2:
             trans_start=setInterval(mqtt_put_sensor_data_to_ponte,trans_frequency,sensor_data);
             break;
-
     }
    
 }
-
 function coap_put_sensor_data_to_ponte(payload){
     var now = new Date();
     dataCounter++;
     payload.push(dateFormat(now, "isoDateTime"));
-
     var sensor_data_topic=gateway_ip;
     var req = coap.request({
      host:ponte_ip,//ponte_ip
@@ -353,19 +336,16 @@ function coap_put_sensor_data_to_ponte(payload){
     req.on('end', function() {
     res.pipe('end')
 });
-
 });
   
 console.log(dateFormat(now, "h:MM:ss.l"));
 sensorData.length=0;
 req.end()
 }
-
 function http_put_sensor_data_to_ponte(payload){
     var now = new Date();
     dataCounter++;
     payload.push(dateFormat(now, "isoDateTime"));
-
     var sensor_data_topic=gateway_ip;   
     var options = {
         "host":ponte_ip, //ponte_ip
@@ -373,7 +353,6 @@ function http_put_sensor_data_to_ponte(payload){
         "path":"/resources/"+sensor_data_topic,// oxoxoxo/54
         "method":"put"
     };
-
     callback =function(response){
         var str=''
         response.on('data',function(chunk){
@@ -389,9 +368,7 @@ function http_put_sensor_data_to_ponte(payload){
     http.request(options, callback).end(body);
     console.log(dateFormat(now, "h:MM:ss.l"));
     sensorData.length=0;
-
 }
-
 function mqtt_put_sensor_data_to_ponte(payloads){
 var ip=gateway_ip;//gateway ip
 var topic=ip;//sensordata topic
@@ -402,14 +379,10 @@ var client =mqtt.connect('mqtt://'+ponte_ip+':1883');
 client.publish(topic,JSON.stringify(payloads),{
   retain:true
 })
-
     console.log(dateFormat(now, "h:MM:ss.l"));
     
     sensorData.length=0;
-
 }
-
-
 */
 /////////////////////////////////xbee action
 // All frames parsed by the XBee will be emitted here
@@ -531,5 +504,3 @@ xbeeAPI.on('frame_object', function (frame) {
             
         }
 });
-
-
