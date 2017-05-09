@@ -55,7 +55,7 @@ var protocal_flag=0; //http=0;coap=1;mqtt=2
 var trans_frequency=30000;
 
 ///////////////////////////////////////////////////////////////////////////////COAP
-/*
+
 const coap  = require('coap')
   , coap_server = coap.createServer({
     host: '192.168.1.128',
@@ -117,7 +117,7 @@ coap_server.on('request', function(msg, res) {
 coap_server.listen(5683, function() {
   console.log('coap is running')
 })
-*/
+
 //////////////////////////////////////////////////////////////////////////////////////////////HTTP
 /*
 server = http.createServer(function (req, res) {
@@ -201,7 +201,7 @@ console.log('HTTP is running');
 });
 */
 ///////////////////////////////////////////////////////////////////// MQTT
- 
+/* 
 var mqtt   = require('mqtt'); 
 var client = mqtt.connect('mqtt://'+ponte_ip +':1883');
 
@@ -289,7 +289,7 @@ client.on('message', function (topic, message) {
 });
 
 
-
+*/
 
 ////////////////////////////////////////////////////////////////////
 /* 
@@ -425,7 +425,7 @@ xbeeAPI.on('frame_object', function (frame) {
                         //emergence mode
                         if(emergencyFlag===true){
                             setTimeout(function(){
-                            frame_obj.data='{\"Command\":100}';
+                            frame_obj.data='{\"Command\":201}';
                             frame_obj.destination64=frame.remote64; //broadcast
                             serialport.write(xbeeAPI.buildFrame(frame_obj));
                             },500);
@@ -453,13 +453,13 @@ xbeeAPI.on('frame_object', function (frame) {
                     else{
                        // console.log('>> receive emergence');
                         if(recoverFlag===true){
-                            frame_obj.data='{\"Command\":200}';
+                            frame_obj.data='{\"Command\":202}';
                             frame_obj.destination64=frame.remote64; //broadcast
                             serialport.write(xbeeAPI.buildFrame(frame_obj));
                             emergencyFlag=true;
                             return;
                         }
-                        frame_obj.data='{\"Command\":100}';
+                        frame_obj.data='{\"Command\":201}';
                         frame_obj.destination64='000000000000ffff'; //broadcast
                         serialport.write(xbeeAPI.buildFrame(frame_obj));
                         emergencyFlag=true;
@@ -480,7 +480,7 @@ xbeeAPI.on('frame_object', function (frame) {
                         recoverFlag=true;
                             
                         //send recover command
-                        frame_obj.data='{\"Command\":200}';
+                        frame_obj.data='{\"Command\":202}';
                         frame_obj.destination64='000000000000ffff'; //broadcast
                         serialport.write(xbeeAPI.buildFrame(frame_obj));
                         console.log('>> send recover');

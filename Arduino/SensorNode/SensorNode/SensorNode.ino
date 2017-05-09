@@ -50,6 +50,9 @@ volatile int sleep_count = 0; // Keep track of how many sleep done
 const int kWorkTime=5; //work 5 seconds
 int sleep_time=1;  // sleep_time*8seconds is pediod of sleep 
 int sleep_mode =1; // 1=8seconds ;2=16seconds; 3=1hr
+const int kSmartSleepShort=7; //1 minute
+const int kSmartSleepMiddle=75; // 10minutes
+const int kSmartSleepLong=450; //1hour
 
 //////////////////////GATEWAY CONFIG
 boolean cordinator_flag=false;
@@ -116,17 +119,12 @@ void WakeUp()
    
    //recovered but not receive stop emergence  
    if(emergency_flag==true&&recover_flag==true){
-    TransData(3);
-   }
-   
+    DataTransmit(3);
+   } 
    // in normal mode ,trans normal data
    else{
-    TransData(1);  
+    DataTransmit(1);  
    }
-   
-   //check sleep mode         
-   CheckSleepMode();
-
    digitalWrite(kLedPin, HIGH);
    while(counter<=(kWorkTime*10))   //0.1 second ;wait receive process
    {  
@@ -173,7 +171,7 @@ xbee.readPacket();
             cordinator_flag=true;
             cordinator_low_address=zbRx.getRemoteAddress64().getLsb();
             delay(TrueRandom.random(1,500));// avoid collision
-            TransData(0);// to confirm this node to gateway
+            DataTransmit(0);// to confirm this node to gateway
             ResetSleep();
             break;         
           
@@ -181,28 +179,44 @@ xbee.readPacket();
       }
       else if (zbRx.getRemoteAddress64().getLsb() ==cordinator_low_address) {    
          switch (command){
-          //receive start emergence command
+          //receive discover command
           case 1:
             BlinkLed(1);
-            cordinator_flag=true;
-            cordinator_low_address=zbRx.getRemoteAddress64().getLsb();
             delay(TrueRandom.random(1,500));// avoid collision
-            TransData(0);// to confirm this node to gateway
-            ResetSleep();
-            break;      
-            
-          case 100:
-            BlinkLed(1);
+            DataTransmit(0);// to confirm this node to gateway
+            break;    
+
+          case 101:
+            sleep_mode=1;
+            CheckSleepMode();
+            DataTransmit(0);// to confirm this node to gateway
+            break;  
+
+           case 102:
+            sleep_mode=2;
+            CheckSleepMode();
+            DataTransmit(0);// to confirm this node to gateway
+            break;  
+
+            case 103:
+            sleep_mode=3;
+            CheckSleepMode();
+            DataTransmit(0);// to confirm this node to gateway
+            break;  
+
+           //receive emergency command
+          case 201:
+            BlinkLed(2);
             if(emergency_flag==false&&recover_flag==false){
               emergency_flag=true;
               original_sleep_mode=sleep_mode;
               original_temperature=DHT.temperature;
-              TransData(2);
+              DataTransmit(2);
               }
             break;
                   
-          //receive stop emergence command
-          case 200:
+          //receive recover command
+          case 202:
             emergency_flag=false;
             recover_flag=false;
             BlinkLed(2);
@@ -217,7 +231,7 @@ xbee.readPacket();
 /* DATA FORMAT
 {"SM": , ,"H", "T","E"=1 }
 */
-void TransData(int event)
+void DataTransmit(int event)
 {
 
    XBeeAddress64 addr64 = XBeeAddress64(cordinator_high_address, cordinator_low_address); // xbee address
@@ -276,7 +290,7 @@ void CheckSleepMode()
       sleep_time=225;
       break;
     case 3:
-      sleep_time=450;
+      SmartSleep();
       break;
    }
 }
@@ -318,7 +332,7 @@ void CheckEmergencyMode()
    //若還沒回正常
    if(emergency_flag==true&&recover_flag==false){
     emergency_count++;
-    TransData(2);
+    DataTransmit(2);
     ResetSleep();
    }
 
@@ -361,5 +375,18 @@ void DetectRecover( )
      }
 
 }
-
+//////////////////smart sleep
+void SmartSleep(){
+  for(int i=0;i<sizeof(kNodeType)/2;i++){
+         if (kNodeType[i]>3000){
+          sleep_time=kSmartSleepLong;
+          return;
+         }
+         else if (kNodeType[i]>2000){
+          sleep_time=kSmartSleepMiddle;
+          return;
+         }
+       }
+  sleep_time= kSmartSleepShort;
+}
 

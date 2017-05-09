@@ -78,6 +78,7 @@ xbee.readPacket();
                   relayState=1;
                   kActuactorState[0]=1;
                   BlinkLed(command);
+                  ConfirmGateway();
                   break;
           case 3:
  
@@ -85,6 +86,7 @@ xbee.readPacket();
                   relayState=0;
                   kActuactorState[0]=0; 
                    BlinkLed(command);
+                   ConfirmGateway();
                  
                   break;
           case 4:
