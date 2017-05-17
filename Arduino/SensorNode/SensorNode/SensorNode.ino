@@ -190,18 +190,21 @@ xbee.readPacket();
             sleep_mode=1;
             CheckSleepMode();
             DataTransmit(0);// to confirm this node to gateway
+            ResetSleep();
             break;  
 
            case 102:
             sleep_mode=2;
             CheckSleepMode();
             DataTransmit(0);// to confirm this node to gateway
+            ResetSleep();
             break;  
 
             case 103:
             sleep_mode=3;
             CheckSleepMode();
             DataTransmit(0);// to confirm this node to gateway
+            ResetSleep();
             break;  
 
            //receive emergency command
@@ -237,7 +240,7 @@ void DataTransmit(int event)
    XBeeAddress64 addr64 = XBeeAddress64(cordinator_high_address, cordinator_low_address); // xbee address
    StaticJsonBuffer<200> jsonBuffer;
    JsonObject& root = jsonBuffer.createObject();
-   root["E"]=event;
+   
    switch(event){
       case 0://confirm gateway
       {
@@ -245,8 +248,9 @@ void DataTransmit(int event)
         for(int i=0;i<sizeof(kNodeType)/2;i++){
           TYPE.add(kNodeType[i]);
         }
-        root["SM"]=sleep_mode;
+        root["SLEEP_MODE"]=sleep_mode;
       }
+        root["EVENT"]=event;
         break;
       case 1://send normal data
         DetectAbnormalTemperature();
@@ -257,10 +261,12 @@ void DataTransmit(int event)
       case 2://send EMERGENCY data
         root["T"]=DHTtemperature;
         root["DEBUG "]=original_temperature;
+        root["EVENT"]=event;
         break;
 
       case 3://send RECOVER data
         root["T"]=DHTtemperature;
+        root["EVENT"]=event;
         break;
    }
    //json to string
@@ -380,13 +386,16 @@ void SmartSleep(){
   for(int i=0;i<sizeof(kNodeType)/2;i++){
          if (kNodeType[i]>3000){
           sleep_time=kSmartSleepLong;
+          BlinkLed(3);
           return;
          }
          else if (kNodeType[i]>2000){
           sleep_time=kSmartSleepMiddle;
+           BlinkLed(2);
           return;
          }
        }
   sleep_time= kSmartSleepShort;
+   BlinkLed(1);
 }
 

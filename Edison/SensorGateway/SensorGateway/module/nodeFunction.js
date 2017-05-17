@@ -11,7 +11,7 @@ function NodeStruct(receiveData,sensor_flag) {
     
   // sensor node record sleepmode and wakeup     
   if(sensor_flag===true){
-      this.SLEEP_MODE=receiveData.SM;
+      this.SLEEP_MODE=receiveData.SLEEPMODE;
       this.wakeup=false; 
   }
     
@@ -40,7 +40,7 @@ exports.checkNode =function checkNode(sensorNode,actuator,receiveData){
          if(sensorNode[i].UUID===receiveData.UUID){
              sensorNode[i].UUID = receiveData.UUID;
              sensorNode[i].TYPE=receiveData.TYPE;
-             sensorNode[i].SLEEP_MODE=receiveData.SM;
+             sensorNode[i].SLEEP_MODE=receiveData.SLEEPMODE;
              console.log('>> sensorNode updated');
              return;
             }
@@ -99,10 +99,10 @@ function discoverNode(sensorNode,actuator){
             for(var j=0;j<(sensorNodeTemp[sensornodeQuantity].TYPE.length);j++){
 
                 if(type===''){
-                    type=type+sensorNodeTemp[sensornodeQuantity].TYPE[j]+'_0';
+                    type=type+sensorNodeTemp[sensornodeQuantity].TYPE[j];
                 }
                 else{
-                    type=type+','+sensorNodeTemp[sensornodeQuantity].TYPE[j]+'_0';
+                    type=type+','+sensorNodeTemp[sensornodeQuantity].TYPE[j];
                 }
 
             }
