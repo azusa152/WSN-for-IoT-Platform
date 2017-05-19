@@ -11,7 +11,7 @@ function NodeStruct(receiveData,sensor_flag) {
     
   // sensor node record sleepmode and wakeup     
   if(sensor_flag===true){
-      this.SLEEP_MODE=receiveData.SLEEPMODE;
+      this.SLEEP_MODE=receiveData.SLEEP_MODE;
       this.wakeup=false; 
   }
     
@@ -40,7 +40,7 @@ exports.checkNode =function checkNode(sensorNode,actuator,receiveData){
          if(sensorNode[i].UUID===receiveData.UUID){
              sensorNode[i].UUID = receiveData.UUID;
              sensorNode[i].TYPE=receiveData.TYPE;
-             sensorNode[i].SLEEP_MODE=receiveData.SLEEPMODE;
+             sensorNode[i].SLEEP_MODE=receiveData.SLEEP_MODE;
              console.log('>> sensorNode updated');
              return;
             }

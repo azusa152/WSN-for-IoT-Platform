@@ -1,8 +1,9 @@
 var dateFormat = require('dateformat');
 var sensorData=[];
+var gatewayUUID;
 
 function NodeStruct(uuid,data,time) {
-  this.UUID =uuid;
+  this.UUID =gatewayUUID+'/'+uuid;
   this.DATA=data;
   this.TIME=time;
 }
@@ -21,10 +22,12 @@ function addTemperature (receiveData){
         sensorData.push(new NodeStruct(uuid,receiveData.T,utcTime));
     }   
 }
-exports.payloadPreProcess= function  (receiveData){
+exports.payloadPreProcess= function  (receiveData,gateway_uuid){
     sensorData.length=0;
-    transProcessData=addHumidity(receiveData);
-    transProcessData=addTemperature(receiveData);
+    gatewayUUID=gateway_uuid;
+    addHumidity(receiveData);
+    addTemperature(receiveData);
+  
     return sensorData;
    
 }

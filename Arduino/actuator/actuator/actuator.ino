@@ -113,7 +113,7 @@ void ConfirmGateway()
    XBeeAddress64 addr64 = XBeeAddress64(cordinator_high_address, cordinator_low_address); // xbee address
    StaticJsonBuffer<200> jsonBuffer;
    JsonObject& root = jsonBuffer.createObject();
-   root["E"]=0;
+   root["EVENT"]=0;
    
    JsonArray& TYPE = root.createNestedArray("TYPE");
         for(int i=0;i<sizeof(kNodeType)/2;i++){
