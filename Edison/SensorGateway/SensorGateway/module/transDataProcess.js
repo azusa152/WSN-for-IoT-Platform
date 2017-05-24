@@ -4,8 +4,8 @@ var gatewayUUID;
 
 function NodeStruct(uuid,data,time) {
   this.UUID =gatewayUUID+'/'+uuid;
-  this.DATA=data;
-  this.TIME=time;
+  this.data=data;
+  this.utcTime=time;
 }
 function addHumidity(receiveData){
   

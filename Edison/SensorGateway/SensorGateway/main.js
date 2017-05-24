@@ -46,7 +46,7 @@ var emergencyFlag=Boolean(false);
 var recoverFlag=Boolean(false);
 
 ////////////////////////////////ip setting
-var ponte_ip='';
+var ponte_ip='192.168.1.140';
 var gateway_ip="192.168.1.128";
 var gateway_uuid=Base64.encodeURI(gateway_ip);
 
@@ -141,7 +141,7 @@ function put_sensor_data_to_ponte(payload){
 }
 */
 //////////////////////////////////////////////////////////////////////////////////////////////HTTP
-
+/*
 server = http.createServer(function (req, res) {
     path = url.parse(req.url);
     var ponte_address='';
@@ -246,9 +246,9 @@ function put_sensor_data_to_ponte(payload){
     console.log('>>>'+sensor_data_topic);
     console.log('>>>'+body);
 }
-
+*/
 ///////////////////////////////////////////////////////////////////// MQTT
-/* 
+
 var mqtt   = require('mqtt'); 
 var client = mqtt.connect('mqtt://'+ponte_ip +':1883');
 
@@ -330,18 +330,17 @@ client.on('message', function (topic, message) {
   }
 
 });
-function put_sensor_data_to_ponte(payloads){
+function put_sensor_data_to_ponte(payload){
     var sensor_data_topic=payload.UUID;
     delete payload.UUID; 
-    var ip=gateway_ip;//gateway ip
-    var sensor_data_topic=ip;//sensordata topic
-    client.publish(sensor_data_topic,JSON.stringify(payloads),{
+
+    client.publish(sensor_data_topic,JSON.stringify(payload),{
       retain:true
     })
     console.log('>>>'+sensor_data_topic);
-    console.log('>>>'+JSON.stringify(payloads));
+    console.log('>>>'+JSON.stringify(payload));
 }
-*/
+
 
 
 /////////////////////////////////xbee action
