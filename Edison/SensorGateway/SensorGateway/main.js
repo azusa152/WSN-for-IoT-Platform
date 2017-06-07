@@ -141,7 +141,7 @@ function put_sensor_data_to_ponte(payload){
 }
 */
 //////////////////////////////////////////////////////////////////////////////////////////////HTTP
-/*
+
 server = http.createServer(function (req, res) {
     path = url.parse(req.url);
     var ponte_address='';
@@ -246,9 +246,9 @@ function put_sensor_data_to_ponte(payload){
     console.log('>>>'+sensor_data_topic);
     console.log('>>>'+body);
 }
-*/
-///////////////////////////////////////////////////////////////////// MQTT
 
+///////////////////////////////////////////////////////////////////// MQTT
+/*
 var mqtt   = require('mqtt'); 
 var client = mqtt.connect('mqtt://'+ponte_ip +':1883');
 
@@ -341,7 +341,7 @@ function put_sensor_data_to_ponte(payload){
     console.log('>>>'+JSON.stringify(payload));
 }
 
-
+*/
 
 /////////////////////////////////xbee action
 // All frames parsed by the XBee will be emitted here
@@ -450,7 +450,7 @@ xbeeAPI.on('frame_object', function (frame) {
                        sensorData=transDataProcess.payloadPreProcess(receiveData,gateway_uuid);
                        for(var i=0;i<sensorData.length;i++){
                            if(ponte_ip!=''){
-                                put_sensor_data_to_ponte(sensorData[i]);
+                                //put_sensor_data_to_ponte(sensorData[i]);
                             }
                        }
                        sensorData.length=0; //clear sensor data

@@ -6,7 +6,6 @@
 #include <XBee.h>
 
 //////////////////////SENSOR CONFIG 
-
 //DHT config
 #define DHT_PIN A0 
 dht DHT;
@@ -50,7 +49,7 @@ volatile int sleep_count = 0; // Keep track of how many sleep done
 const int kWorkTime=5; //work 5 seconds
 int sleep_time=1;  // sleep_time*8seconds is pediod of sleep 
 int sleep_mode =1; // 1=8seconds ;2=16seconds; 3=1hr
-const int kSmartSleepShort=7; //1 minute
+const int kSmartSleepShort=1; //1 minute
 const int kSmartSleepMiddle=75; // 10minutes
 const int kSmartSleepLong=450; //1hour
 
@@ -70,9 +69,9 @@ boolean recover_flag=false;
 int emergency_count=0;
 float average_temperature=0;
 
-float kThreshold=20;// percentage of Threshold
-float original_temperature=0; // before emergence value
 int original_sleep_mode =1;
+int m_n=0;
+double m_oldM, m_newM, m_oldS, m_newS;
 
 //////////////////////MAIN FUNCTION
 void setup() 
@@ -213,7 +212,6 @@ xbee.readPacket();
             if(emergency_flag==false&&recover_flag==false){
               emergency_flag=true;
               original_sleep_mode=sleep_mode;
-              original_temperature=DHT.temperature;
               DataTransmit(2);
               }
             break;
@@ -260,7 +258,9 @@ void DataTransmit(int event)
 
       case 2://send EMERGENCY data
         root["T"]=DHTtemperature;
-        root["DEBUG "]=original_temperature;
+        root["DEBUG "]=m_newM;
+        root["DEV "]=3*Anomaly_Detection_StandardDeviation();
+        
         root["EVENT"]=event;
         break;
 
@@ -353,34 +353,74 @@ void CheckEmergencyMode()
 void DetectAbnormalTemperature( )
 {
   ReadDHT();
-  if(average_temperature!=0){
-      if(abs(1-(DHTtemperature/average_temperature))>(kThreshold/100)&&emergency_flag==false){
+  if(m_n>1){
+    if(Anomaly_Detection_StandardDeviation()!=0){
+       if(abs(DHTtemperature-m_newM)>(3*Anomaly_Detection_StandardDeviation())&&emergency_flag==false){
          //record original setting
-        original_temperature=average_temperature;
         original_sleep_mode=sleep_mode;
         Buzzer();
-
         recover_flag=false;
         emergency_flag=true;
         sleep_time=1;
-     }
-     
-      average_temperature=(average_temperature+DHT.temperature)/2;
+        return;
+       }
+      
+    }
+
   }
-  else {
-    average_temperature=DHT.temperature;    
-  }
+  if(emergency_flag==false){
+      //push normal data
+      Anomaly_Detection_Push(DHTtemperature);
+    }
 }
+
 
 ///////////////DetectAbnormalTemperature
 void DetectRecover( )
 {
-  if(abs(1-(original_temperature/DHTtemperature))<(kThreshold/100)) {
+  if(abs(DHTtemperature-m_newM)<(3*Anomaly_Detection_StandardDeviation())&&emergency_flag==true) {
     recover_flag=true;
     sleep_mode=original_sleep_mode; 
      }
 
 }
+///////////////Anomaly culculation function
+void Anomaly_Detection_Push(double x)
+ {
+            m_n++;
+
+            // See Knuth TAOCP vol 2, 3rd edition, page 232
+            if (m_n == 1)
+            {
+                m_oldM = m_newM = x;
+                m_oldS = 0.0;
+            }
+            else
+            {
+                m_newM = m_oldM + (x - m_oldM)/m_n;
+                m_newS = m_oldS + (x - m_oldM)*(x - m_newM);
+
+                // set up for next iteration
+                m_oldM = m_newM;
+                m_oldS = m_newS;
+            }
+}
+
+double Anomaly_Detection_Mean() 
+ {
+  return (m_n > 0) ? m_newM : 0.0;
+ }
+
+double Anomaly_Detection_Variance() 
+ {
+  return ( (m_n > 1) ? m_newS/(m_n - 1) : 0.0 );
+ }
+
+double Anomaly_Detection_StandardDeviation() 
+{
+            return sqrt( Anomaly_Detection_Variance() );
+}
+
 //////////////////smart sleep
 void SmartSleep(){
   for(int i=0;i<sizeof(kNodeType)/2;i++){
