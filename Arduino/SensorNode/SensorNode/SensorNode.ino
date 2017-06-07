@@ -72,6 +72,7 @@ float average_temperature=0;
 int original_sleep_mode =1;
 int m_n=0;
 double m_oldM, m_newM, m_oldS, m_newS;
+const int kAnomalyCounter=20;
 
 //////////////////////MAIN FUNCTION
 void setup() 
@@ -125,6 +126,7 @@ void WakeUp()
     DataTransmit(1);  
    }
    digitalWrite(kLedPin, HIGH);
+
    while(counter<=(kWorkTime*10))   //0.1 second ;wait receive process
    {  
     DataReceive();
@@ -258,9 +260,6 @@ void DataTransmit(int event)
 
       case 2://send EMERGENCY data
         root["T"]=DHTtemperature;
-        root["DEBUG "]=m_newM;
-        root["DEV "]=3*Anomaly_Detection_StandardDeviation();
-        
         root["EVENT"]=event;
         break;
 
@@ -290,10 +289,10 @@ void CheckSleepMode()
   switch(sleep_mode)
    {
     case 1:
-      sleep_time=1;
+      sleep_time=kSmartSleepShort;
       break;
     case 2:
-      sleep_time=225;
+      sleep_time=kSmartSleepMiddle;
       break;
     case 3:
       SmartSleep();
@@ -354,8 +353,8 @@ void DetectAbnormalTemperature( )
 {
   ReadDHT();
   if(m_n>1){
-    if(Anomaly_Detection_StandardDeviation()!=0){
-       if(abs(DHTtemperature-m_newM)>(3*Anomaly_Detection_StandardDeviation())&&emergency_flag==false){
+    if(AnomalyDetectionStandardDeviation()!=0){
+       if(abs(DHTtemperature-AnomalyDetectionMean())>(3*AnomalyDetectionStandardDeviation())&&emergency_flag==false){
          //record original setting
         original_sleep_mode=sleep_mode;
         Buzzer();
@@ -363,14 +362,15 @@ void DetectAbnormalTemperature( )
         emergency_flag=true;
         sleep_time=1;
         return;
-       }
-      
+       }    
     }
-
   }
-  if(emergency_flag==false){
+  if(emergency_flag==false&&DHTtemperature!=0){
       //push normal data
-      Anomaly_Detection_Push(DHTtemperature);
+      if(m_n>kAnomalyCounter){
+       AnomalyDetectionClear();
+      }
+      AnomalyDetectionPush(DHTtemperature);
     }
 }
 
@@ -378,14 +378,14 @@ void DetectAbnormalTemperature( )
 ///////////////DetectAbnormalTemperature
 void DetectRecover( )
 {
-  if(abs(DHTtemperature-m_newM)<(3*Anomaly_Detection_StandardDeviation())&&emergency_flag==true) {
+  if(abs(DHTtemperature-AnomalyDetectionMean())<(3*AnomalyDetectionStandardDeviation())&&emergency_flag==true) {
     recover_flag=true;
     sleep_mode=original_sleep_mode; 
      }
 
 }
 ///////////////Anomaly culculation function
-void Anomaly_Detection_Push(double x)
+void AnomalyDetectionPush(double x)
  {
             m_n++;
 
@@ -406,19 +406,22 @@ void Anomaly_Detection_Push(double x)
             }
 }
 
-double Anomaly_Detection_Mean() 
+double AnomalyDetectionMean() 
  {
   return (m_n > 0) ? m_newM : 0.0;
  }
 
-double Anomaly_Detection_Variance() 
+double AnomalyDetectionVariance() 
  {
   return ( (m_n > 1) ? m_newS/(m_n - 1) : 0.0 );
  }
 
-double Anomaly_Detection_StandardDeviation() 
+double AnomalyDetectionStandardDeviation() 
 {
-            return sqrt( Anomaly_Detection_Variance() );
+            return sqrt( AnomalyDetectionVariance() );
+}
+void AnomalyDetectionClear(){
+  m_n=0;
 }
 
 //////////////////smart sleep

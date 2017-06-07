@@ -142,6 +142,7 @@ function put_sensor_data_to_ponte(payload){
 */
 //////////////////////////////////////////////////////////////////////////////////////////////HTTP
 
+
 server = http.createServer(function (req, res) {
     path = url.parse(req.url);
     var ponte_address='';
