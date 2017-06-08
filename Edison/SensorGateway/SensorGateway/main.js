@@ -52,7 +52,7 @@ var gateway_uuid=Base64.encodeURI(gateway_ip);
 
 
 ///////////////////////////////////////////////////////////////////////////////COAP
-/*
+
 const coap  = require('coap')
   , coap_server = coap.createServer({
     host: '192.168.1.128',
@@ -83,30 +83,110 @@ coap_server.on('request', function(msg, res) {
             var bodydata=""+msg.payload;
             //format:MTkyLjE2OC4xLjEyOA/0013a20040c8d185/1001/1
             var bodySplit = bodydata.toString().split("/"); 
-            var ActuatorUUID=bodySplit[1];
-            var ActuatorTIPE=bodySplit[2];
-            var ActuatorACTION=bodySplit[3];
+            var ReceiveUUID=bodySplit[1];
+            var ReceiveTYPE=bodySplit[2];
+            var ReceiveACTION=bodySplit[3];
+              console.log(">>azusa:"+bodydata);
               
-            var ActuatorNUMBER=nodeFunction.findNode(actuator,ActuatorUUID);
-                if(ActuatorNUMBER!=-1){
-                    switch(ActuatorTIPE){
-                        case '1': //relay
-                            if(ActuatorACTION==='1"'){
-                                frame_obj.data="{\"Command\":2}";
-                                frame_obj.destination64=ActuatorUUID;
-                                serialport.write(xbeeAPI.buildFrame(frame_obj));
-                                console.log(">>relay on");
-                               
-                            }
-                            else if(ActuatorACTION==='0"'){
-                                frame_obj.data="{\"Command\":3}";
-                                frame_obj.destination64=ActuatorUUID;
-                                serialport.write(xbeeAPI.buildFrame(frame_obj));
-                                console.log(">>relay off");
-                               
-                            }
+           
+                if(ReceiveACTION<=100){
+                    var ActuatorNUMBER=nodeFunction.findNode(actuator,ReceiveUUID);
+                    if(ActuatorNUMBER!=-1){
+                        switch(ReceiveTYPE){
+                            case '1': //relay
+                                if(ReceiveACTION==='1"'){
+                                    frame_obj.data="{\"Command\":2}";
+                                    frame_obj.destination64=ReceiveUUID;
+                                    serialport.write(xbeeAPI.buildFrame(frame_obj));
+                                    console.log(">>relay on");
+
+                                }
+                                else if(ReceiveACTION==='0"'){
+                                    frame_obj.data="{\"Command\":3}";
+                                    frame_obj.destination64=ReceiveUUID;
+                                    serialport.write(xbeeAPI.buildFrame(frame_obj));
+                                    console.log(">>relay off");
+
+                                }
+                                break;
+                        }
                     }
                 }
+              else{
+                    console.log(">> sleep change"); 
+                    var SensorNUMBER=nodeFunction.findNode(sensorNode,ReceiveUUID);
+                    if(SensorNUMBER!=-1){
+                   
+                        switch(ReceiveACTION){
+                            case '101"': //short
+                                 console.log(">> shoer sleep "); 
+                                if(sensorNode[SensorNUMBER].wakeup===true){
+                                    frame_obj.data="{\"Command\":101}";
+                                    frame_obj.destination64=ReceiveUUID;
+                                    serialport.write(xbeeAPI.buildFrame(frame_obj));
+                                    console.log(">>short sleep"); 
+                                }
+                                else{
+                                    var wakeupCheck=setInterval(function() {
+                                        if(sensorNode[SensorNUMBER].wakeup===true){
+                                            frame_obj.data="{\"Command\":101}";
+                                            frame_obj.destination64=ReceiveUUID;
+                                            serialport.write(xbeeAPI.buildFrame(frame_obj));
+                                            console.log(">>short sleep"); 
+                                            clearInterval(wakeupCheck);
+                                        }
+                                     }, 1000);
+                                }
+                                
+                                break;
+                                
+                            case '102"': //short
+                                if(sensorNode[SensorNUMBER].wakeup===true){
+                                    frame_obj.data="{\"Command\":102}";
+                                    frame_obj.destination64=ReceiveUUID;
+                                    serialport.write(xbeeAPI.buildFrame(frame_obj));
+                                    console.log(">>normal sleep"); 
+                                }
+                                else{
+                                    var wakeupCheck=setInterval(function() {
+                                        if(sensorNode[SensorNUMBER].wakeup===true){
+                                            frame_obj.data="{\"Command\":102}";
+                                            frame_obj.destination64=ReceiveUUID;
+                                            serialport.write(xbeeAPI.buildFrame(frame_obj));
+                                            console.log(">>normal sleep"); 
+                                            clearInterval(wakeupCheck);
+                                        }
+                                     }, 1000);
+                                }
+                                
+                                break;
+                                
+                            case '103"': //short
+                                if(sensorNode[SensorNUMBER].wakeup===true){
+                                    frame_obj.data="{\"Command\":103}";
+                                    frame_obj.destination64=ReceiveUUID;
+                                    serialport.write(xbeeAPI.buildFrame(frame_obj));
+                                    console.log(">>smart sleep"); 
+                                }
+                                else{
+                                    var wakeupCheck=setInterval(function() {
+                                        if(sensorNode[SensorNUMBER].wakeup===true){
+                                            frame_obj.data="{\"Command\":103}";
+                                            frame_obj.destination64=ReceiveUUID;
+                                            serialport.write(xbeeAPI.buildFrame(frame_obj));
+                                            console.log(">>smart sleep"); 
+                                            clearInterval(wakeupCheck);
+                                        }
+                                     }, 1000);
+                                }
+                                
+                                break;
+                               
+                        }
+                    }
+
+                }
+              
             break;
     }
   
@@ -139,10 +219,10 @@ function put_sensor_data_to_ponte(payload){
     console.log('>>>'+sensor_data_topic);
     console.log('>>>'+JSON.stringify(payload));
 }
-*/
+
 //////////////////////////////////////////////////////////////////////////////////////////////HTTP
 
-
+/*
 server = http.createServer(function (req, res) {
     path = url.parse(req.url);
     var ponte_address='';
@@ -188,9 +268,9 @@ server = http.createServer(function (req, res) {
                 var ReceiveUUID=bodySplit[1];
                 var ReceiveTYPE=bodySplit[2];
                 var ReceiveACTION=bodySplit[3];
-                
-                if(ActuatorACTION<=100){
-                    var ActuatorNUMBER=nodeFunction.findNode(actuator,ActuatorUUID);
+        
+                if(ReceiveACTION<=100){
+                    var ActuatorNUMBER=nodeFunction.findNode(actuator,ReceiveUUID);
                     if(ActuatorNUMBER!=-1){
                         switch(ReceiveTYPE){
                             case '1': //relay
@@ -213,10 +293,13 @@ server = http.createServer(function (req, res) {
                     }
                 }
                 else{
+                    
                     var SensorNUMBER=nodeFunction.findNode(sensorNode,ReceiveUUID);
                     if(SensorNUMBER!=-1){
+                   
                         switch(ReceiveACTION){
-                            case '101': //short
+                            case '101"': //short
+               
                                 if(sensorNode[SensorNUMBER].wakeup===true){
                                     frame_obj.data="{\"Command\":101}";
                                     frame_obj.destination64=ReceiveUUID;
@@ -224,7 +307,7 @@ server = http.createServer(function (req, res) {
                                     console.log(">>short sleep"); 
                                 }
                                 else{
-                                    var wakeupCheck=setInverval(function() {
+                                    var wakeupCheck=setInterval(function() {
                                         if(sensorNode[SensorNUMBER].wakeup===true){
                                             frame_obj.data="{\"Command\":101}";
                                             frame_obj.destination64=ReceiveUUID;
@@ -237,7 +320,7 @@ server = http.createServer(function (req, res) {
                                 
                                 break;
                                 
-                            case '102': //short
+                            case '102"': //short
                                 if(sensorNode[SensorNUMBER].wakeup===true){
                                     frame_obj.data="{\"Command\":102}";
                                     frame_obj.destination64=ReceiveUUID;
@@ -245,7 +328,7 @@ server = http.createServer(function (req, res) {
                                     console.log(">>normal sleep"); 
                                 }
                                 else{
-                                    var wakeupCheck=setInverval(function() {
+                                    var wakeupCheck=setInterval(function() {
                                         if(sensorNode[SensorNUMBER].wakeup===true){
                                             frame_obj.data="{\"Command\":102}";
                                             frame_obj.destination64=ReceiveUUID;
@@ -258,7 +341,7 @@ server = http.createServer(function (req, res) {
                                 
                                 break;
                                 
-                            case '103': //short
+                            case '103"': //short
                                 if(sensorNode[SensorNUMBER].wakeup===true){
                                     frame_obj.data="{\"Command\":103}";
                                     frame_obj.destination64=ReceiveUUID;
@@ -266,7 +349,7 @@ server = http.createServer(function (req, res) {
                                     console.log(">>smart sleep"); 
                                 }
                                 else{
-                                    var wakeupCheck=setInverval(function() {
+                                    var wakeupCheck=setInterval(function() {
                                         if(sensorNode[SensorNUMBER].wakeup===true){
                                             frame_obj.data="{\"Command\":103}";
                                             frame_obj.destination64=ReceiveUUID;
@@ -323,7 +406,7 @@ function put_sensor_data_to_ponte(payload){
     console.log('>>>'+sensor_data_topic);
     console.log('>>>'+body);
 }
-
+*/
 ///////////////////////////////////////////////////////////////////// MQTT
 /*
 var mqtt   = require('mqtt'); 
@@ -346,30 +429,109 @@ client.on('message', function (topic, message) {
     var parse =JSON.parse(message.toString());
     var bodydata=parse.data;
     
-    var bodySplit = bodydata.toString().split("/"); 
-    var ActuatorUUID=bodySplit[1];
-    var ActuatorTIPE=bodySplit[2];
-    var ActuatorACTION=bodySplit[3];
+     var bodySplit = bodydata.toString().split("/"); 
+     var ReceiveUUID=bodySplit[1];
+     var ReceiveTYPE=bodySplit[2];
+     var ReceiveACTION=bodySplit[3];
                 
-    var ActuatorNUMBER=nodeFunction.findNode(actuator,ActuatorUUID);
-    if(ActuatorNUMBER!=-1){
-        switch(ActuatorTIPE){
-            case '1': //relay
-                if(ActuatorACTION==='1'){
-                    frame_obj.data="{\"Command\":2}";
-                    frame_obj.destination64=ActuatorUUID;
-                    serialport.write(xbeeAPI.buildFrame(frame_obj));
-                    console.log(">>relay on");    
-                     }
-                
-                else if(ActuatorACTION==='0'){
-                    frame_obj.data="{\"Command\":3}";
-                    frame_obj.destination64=ActuatorUUID;
-                    serialport.write(xbeeAPI.buildFrame(frame_obj));
-                    console.log(">>relay off");
+
+    if(ReceiveACTION<=100){
+                    var ActuatorNUMBER=nodeFunction.findNode(actuator,ReceiveUUID);
+                    if(ActuatorNUMBER!=-1){
+                        switch(ReceiveTYPE){
+                            case '1': //relay
+                                if(ReceiveACTION==='1"'){
+                                    frame_obj.data="{\"Command\":2}";
+                                    frame_obj.destination64=ReceiveUUID;
+                                    serialport.write(xbeeAPI.buildFrame(frame_obj));
+                                    console.log(">>relay on");
+
+                                }
+                                else if(ReceiveACTION==='0"'){
+                                    frame_obj.data="{\"Command\":3}";
+                                    frame_obj.destination64=ReceiveUUID;
+                                    serialport.write(xbeeAPI.buildFrame(frame_obj));
+                                    console.log(">>relay off");
+
+                                }
+                                break;
+                        }
                     }
-        }
-    }
+                }
+                else{
+                    
+                    var SensorNUMBER=nodeFunction.findNode(sensorNode,ReceiveUUID);
+                    if(SensorNUMBER!=-1){
+                   
+                        switch(ReceiveACTION){
+                            case '101': //short
+               
+                                if(sensorNode[SensorNUMBER].wakeup===true){
+                                    frame_obj.data="{\"Command\":101}";
+                                    frame_obj.destination64=ReceiveUUID;
+                                    serialport.write(xbeeAPI.buildFrame(frame_obj));
+                                    console.log(">>short sleep"); 
+                                }
+                                else{
+                                    var wakeupCheck=setInterval(function() {
+                                        if(sensorNode[SensorNUMBER].wakeup===true){
+                                            frame_obj.data="{\"Command\":101}";
+                                            frame_obj.destination64=ReceiveUUID;
+                                            serialport.write(xbeeAPI.buildFrame(frame_obj));
+                                            console.log(">>short sleep"); 
+                                            clearInterval(wakeupCheck);
+                                        }
+                                     }, 1000);
+                                }
+                                
+                                break;
+                                
+                            case '102': //short
+                                if(sensorNode[SensorNUMBER].wakeup===true){
+                                    frame_obj.data="{\"Command\":102}";
+                                    frame_obj.destination64=ReceiveUUID;
+                                    serialport.write(xbeeAPI.buildFrame(frame_obj));
+                                    console.log(">>normal sleep"); 
+                                }
+                                else{
+                                    var wakeupCheck=setInterval(function() {
+                                        if(sensorNode[SensorNUMBER].wakeup===true){
+                                            frame_obj.data="{\"Command\":102}";
+                                            frame_obj.destination64=ReceiveUUID;
+                                            serialport.write(xbeeAPI.buildFrame(frame_obj));
+                                            console.log(">>normal sleep"); 
+                                            clearInterval(wakeupCheck);
+                                        }
+                                     }, 1000);
+                                }
+                                
+                                break;
+                                
+                            case '103': //short
+                                if(sensorNode[SensorNUMBER].wakeup===true){
+                                    frame_obj.data="{\"Command\":103}";
+                                    frame_obj.destination64=ReceiveUUID;
+                                    serialport.write(xbeeAPI.buildFrame(frame_obj));
+                                    console.log(">>smart sleep"); 
+                                }
+                                else{
+                                    var wakeupCheck=setInterval(function() {
+                                        if(sensorNode[SensorNUMBER].wakeup===true){
+                                            frame_obj.data="{\"Command\":103}";
+                                            frame_obj.destination64=ReceiveUUID;
+                                            serialport.write(xbeeAPI.buildFrame(frame_obj));
+                                            console.log(">>smart sleep"); 
+                                            clearInterval(wakeupCheck);
+                                        }
+                                     }, 1000);
+                                }
+                                
+                                break;
+                               
+                        }
+                    }
+
+                }
     
   }
     
@@ -418,8 +580,8 @@ function put_sensor_data_to_ponte(payload){
     console.log('>>>'+JSON.stringify(payload));
 }
 
-*/
 
+*/
 /////////////////////////////////xbee action
 // All frames parsed by the XBee will be emitted here
 xbeeAPI.on('frame_object', function (frame) {
