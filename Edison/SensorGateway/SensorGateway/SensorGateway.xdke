@@ -29,8 +29,8 @@
         "name": "LICENSE.md"
       },
       "main.js": {
-        "previousModTime": 1498207836313,
-        "modified": 1498207836313,
+        "previousModTime": 1498288308858,
+        "modified": 1498288308858,
         "seen": true,
         "name": "main.js"
       },
@@ -53,8 +53,8 @@
         "name": "SensorGateway.xdk"
       },
       "SensorGateway.xdke": {
-        "previousModTime": 1498207897468,
-        "modified": 1498207897468,
+        "previousModTime": 1498288236515,
+        "modified": 1498288236515,
         "seen": true,
         "name": "SensorGateway.xdke"
       },
@@ -77,8 +77,8 @@
         "name": "module/nodeFunction.js"
       },
       "module/transDataProcess.js": {
-        "previousModTime": 1495597573279,
-        "modified": 1495597573279,
+        "previousModTime": 1498287123773,
+        "modified": 1498287123773,
         "seen": true,
         "name": "module/transDataProcess.js"
       },
@@ -95,6 +95,10 @@
         "name": "xdk/xdk/project-info.json"
       }
     },
-    "boardFileStatus": {}
+    "boardFileStatus": {
+      "main.js": {
+        "previousModTime": 1498288309344
+      }
+    }
   }
 }

@@ -22,11 +22,20 @@ function addTemperature (receiveData){
         sensorData.push(new NodeStruct(uuid,receiveData.T,utcTime));
     }   
 }
+
+function addCO (receiveData){
+    if(receiveData.C!=undefined){
+        var utcTime=dateFormat(new Date(),"isoUtcDateTime");
+        var uuid=receiveData.UUID+'/'+'3001'
+        sensorData.push(new NodeStruct(uuid,receiveData.C,utcTime));
+    }   
+}
 exports.payloadPreProcess= function  (receiveData,gateway_uuid){
     sensorData.length=0;
     gatewayUUID=gateway_uuid;
     addHumidity(receiveData);
     addTemperature(receiveData);
+    addCO(receiveData);
   
     return sensorData;
    

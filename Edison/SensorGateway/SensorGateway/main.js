@@ -46,8 +46,8 @@ var emergencyFlag=Boolean(false);
 var recoverFlag=Boolean(false);
 
 ////////////////////////////////ip setting
-var ponte_ip='192.168.1.140';
-var gateway_ip="192.168.1.128";
+var ponte_ip='134.208.3.206';
+var gateway_ip="192.168.1.142";
 var gateway_uuid=Base64.encodeURI(gateway_ip);
 
 
@@ -220,7 +220,7 @@ function put_sensor_data_to_ponte(payload){
 }
 */
 //////////////////////////////////////////////////////////////////////////////////////////////HTTP
-
+/*
 server = http.createServer(function (req, res) {
     path = url.parse(req.url);
     var ponte_address='';
@@ -248,6 +248,7 @@ server = http.createServer(function (req, res) {
             res.end(connectedNode);
             }, 2000);
         break;
+            
             
      case '/'+gateway_uuid+"/Actuator":
            
@@ -406,9 +407,9 @@ function put_sensor_data_to_ponte(payload){
     console.log('>>>'+sensor_data_topic);
     console.log('>>>'+body);
 }
-
+*/
 ///////////////////////////////////////////////////////////////////// MQTT
-/*
+
 
 var client = mqtt.connect('mqtt://'+ponte_ip +':1883');
 
@@ -421,6 +422,7 @@ client.on('connect', function () {
    console.log('MQTT is running');
 
 });
+
 
 
 client.on('message', function (topic, message) {
@@ -440,14 +442,14 @@ client.on('message', function (topic, message) {
                     if(ActuatorNUMBER!=-1){
                         switch(ReceiveTYPE){
                             case '1': //relay
-                                if(ReceiveACTION==='1"'){
+                                if(ReceiveACTION==='1'){
                                     frame_obj.data="{\"Command\":2}";
                                     frame_obj.destination64=ReceiveUUID;
                                     serialport.write(xbeeAPI.buildFrame(frame_obj));
                                     console.log(">>relay on");
 
                                 }
-                                else if(ReceiveACTION==='0"'){
+                                else if(ReceiveACTION==='0'){
                                     frame_obj.data="{\"Command\":3}";
                                     frame_obj.destination64=ReceiveUUID;
                                     serialport.write(xbeeAPI.buildFrame(frame_obj));
@@ -581,7 +583,7 @@ function put_sensor_data_to_ponte(payload){
 }
 
 
-*/
+
 /////////////////////////////////xbee action
 // All frames parsed by the XBee will be emitted here
 xbeeAPI.on('frame_object', function (frame) {
