@@ -10,7 +10,7 @@ var dateFormat = require('dateformat');
 const http = require('http');
 const url = require('url');
 var Base64 = require('js-base64').Base64;
-
+var mqtt   = require('mqtt'); 
 /////////////////////////////////serial port bug fix
 //openSerialPPort.openMySerialPort();
 
@@ -52,7 +52,7 @@ var gateway_uuid=Base64.encodeURI(gateway_ip);
 
 
 ///////////////////////////////////////////////////////////////////////////////COAP
-
+/*
 const coap  = require('coap')
   , coap_server = coap.createServer({
     host: '192.168.1.128',
@@ -69,8 +69,7 @@ coap_server.on('request', function(msg, res) {
             serialport.write(xbeeAPI.buildFrame(frame_obj));
             nodeFunction.doDiscoverNode(sensorNode,actuator);
               
-              
-            
+                    
             setTimeout(function() {
                 connectedNode=nodeFunction.getConnectedNode();
                 connectedNode='{'+connectedNode+'}';
@@ -86,10 +85,10 @@ coap_server.on('request', function(msg, res) {
             var ReceiveUUID=bodySplit[1];
             var ReceiveTYPE=bodySplit[2];
             var ReceiveACTION=bodySplit[3];
-              console.log(">>azusa:"+bodydata);
+            
               
            
-                if(ReceiveACTION<=100){
+                if(ReceiveTYPE<=100){
                     var ActuatorNUMBER=nodeFunction.findNode(actuator,ReceiveUUID);
                     if(ActuatorNUMBER!=-1){
                         switch(ReceiveTYPE){
@@ -113,13 +112,13 @@ coap_server.on('request', function(msg, res) {
                     }
                 }
               else{
-                    console.log(">> sleep change"); 
+               
                     var SensorNUMBER=nodeFunction.findNode(sensorNode,ReceiveUUID);
                     if(SensorNUMBER!=-1){
                    
                         switch(ReceiveACTION){
                             case '101"': //short
-                                 console.log(">> shoer sleep "); 
+                               
                                 if(sensorNode[SensorNUMBER].wakeup===true){
                                     frame_obj.data="{\"Command\":101}";
                                     frame_obj.destination64=ReceiveUUID;
@@ -219,10 +218,9 @@ function put_sensor_data_to_ponte(payload){
     console.log('>>>'+sensor_data_topic);
     console.log('>>>'+JSON.stringify(payload));
 }
-
+*/
 //////////////////////////////////////////////////////////////////////////////////////////////HTTP
 
-/*
 server = http.createServer(function (req, res) {
     path = url.parse(req.url);
     var ponte_address='';
@@ -269,7 +267,7 @@ server = http.createServer(function (req, res) {
                 var ReceiveTYPE=bodySplit[2];
                 var ReceiveACTION=bodySplit[3];
         
-                if(ReceiveACTION<=100){
+                if(ReceiveTYPE<=100){
                     var ActuatorNUMBER=nodeFunction.findNode(actuator,ReceiveUUID);
                     if(ActuatorNUMBER!=-1){
                         switch(ReceiveTYPE){
@@ -380,6 +378,8 @@ server = http.createServer(function (req, res) {
 });
 server.listen(3001, function() {
 console.log('HTTP is running');
+    console.log(gateway_uuid);
+
 });
 
 function put_sensor_data_to_ponte(payload){
@@ -406,10 +406,10 @@ function put_sensor_data_to_ponte(payload){
     console.log('>>>'+sensor_data_topic);
     console.log('>>>'+body);
 }
-*/
+
 ///////////////////////////////////////////////////////////////////// MQTT
 /*
-var mqtt   = require('mqtt'); 
+
 var client = mqtt.connect('mqtt://'+ponte_ip +':1883');
 
 var sevice_discovery_topic = gateway_uuid+'/discovery_request';
@@ -435,7 +435,7 @@ client.on('message', function (topic, message) {
      var ReceiveACTION=bodySplit[3];
                 
 
-    if(ReceiveACTION<=100){
+    if(ReceiveTYPE<=100){
                     var ActuatorNUMBER=nodeFunction.findNode(actuator,ReceiveUUID);
                     if(ActuatorNUMBER!=-1){
                         switch(ReceiveTYPE){
@@ -689,7 +689,7 @@ xbeeAPI.on('frame_object', function (frame) {
                        sensorData=transDataProcess.payloadPreProcess(receiveData,gateway_uuid);
                        for(var i=0;i<sensorData.length;i++){
                            if(ponte_ip!=''){
-                                //put_sensor_data_to_ponte(sensorData[i]);
+                                put_sensor_data_to_ponte(sensorData[i]);
                             }
                        }
                        sensorData.length=0; //clear sensor data

@@ -9,9 +9,9 @@ ZigBee Header: 28 bytes, Network security header: 18, Data: 82 bytes
 With Application security:
 ZigBee Header: 28 bytes, Network security header: 18, Application Security header: 8 Data: 82 bytes
 
-987
-10
-3
+ID 987
+SC 10
+SD 3
 
 COR
 0013A200
@@ -29,12 +29,27 @@ ROUTER3
 13A200
 40694FA0
 
-END1
-13A200
-4071F744
+
 
 ///////////////////
 用xbee.h時
 AP APIMODE要調2
 
 edison 預設為serial1
+
+//////////////////////////////////////////////
+ID 319
+SC 10
+SD 3
+
+
+COR2_HC (XBP24C )
+13A200
+40F1EC3E
+
+CE (Coordinator Enable)Enable作為Coordinator 
+			       dis 為router
+
+ROUTER2_HC
+13A200
+4071F744
