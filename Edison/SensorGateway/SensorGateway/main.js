@@ -46,8 +46,8 @@ var emergencyFlag=Boolean(false);
 var recoverFlag=Boolean(false);
 
 ////////////////////////////////ip setting
-var ponte_ip='134.208.3.206';
-var gateway_ip="192.168.1.142";
+var ponte_ip='134.208.3.207';
+var gateway_ip="192.168.1.128";
 var gateway_uuid=Base64.encodeURI(gateway_ip);
 
 
@@ -538,8 +538,10 @@ client.on('message', function (topic, message) {
   }
     
   else{
-    var payloadJSON=JSON.parse(message.toString());
-    if(payloadJSON.will_message==="null"){
+    var payloadJSON=message.toString();
+    var parsePayload=JSON.parse(payloadJSON);
+      
+    if(parsePayload.will_message==="null"){
         // bug avoid
     }
     else{

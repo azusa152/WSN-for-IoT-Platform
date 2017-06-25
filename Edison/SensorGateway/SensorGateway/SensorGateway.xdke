@@ -11,93 +11,93 @@
   "iot-tab": {
     "fileStatus": {
       ".gitignore": {
-        "previousModTime": 1495346889919,
-        "modified": 1495346889919,
+        "previousModTime": 1498291497165,
+        "modified": 1498291497165,
         "seen": true,
         "name": ".gitignore"
       },
       "icon.png": {
-        "previousModTime": 1495346889922,
-        "modified": 1495346889922,
+        "previousModTime": 1498291497190,
+        "modified": 1498291497190,
         "seen": true,
         "name": "icon.png"
       },
       "LICENSE.md": {
-        "previousModTime": 1495346889919,
-        "modified": 1495346889919,
+        "previousModTime": 1498291497172,
+        "modified": 1498291497172,
         "seen": true,
         "name": "LICENSE.md"
       },
       "main.js": {
-        "previousModTime": 1498288308858,
-        "modified": 1498288308858,
+        "previousModTime": 1498384987967,
+        "modified": 1498384987967,
         "seen": true,
         "name": "main.js"
       },
       "package.json": {
-        "previousModTime": 1495346889925,
-        "modified": 1495346889925,
+        "previousModTime": 1498291497246,
+        "modified": 1498291497246,
         "seen": true,
         "name": "package.json"
       },
       "README.md": {
-        "previousModTime": 1495346889920,
-        "modified": 1495346889920,
+        "previousModTime": 1498291497176,
+        "modified": 1498291497176,
         "seen": true,
         "name": "README.md"
       },
       "SensorGateway.xdk": {
-        "previousModTime": 1495346889920,
-        "modified": 1495346889920,
+        "previousModTime": 1498291497181,
+        "modified": 1498291497181,
         "seen": true,
         "name": "SensorGateway.xdk"
       },
       "SensorGateway.xdke": {
-        "previousModTime": 1498288236515,
-        "modified": 1498288236515,
+        "previousModTime": 1498384829391,
+        "modified": 1498384829391,
         "seen": true,
         "name": "SensorGateway.xdke"
       },
       "dataformat": {
-        "previousModTime": 1495346889921,
-        "modified": 1495346889921,
+        "previousModTime": 1498291497189,
+        "modified": 1498291497189,
         "seen": true,
         "name": "dataformat"
       },
       "module/frameProcess.js": {
-        "previousModTime": 1495346889923,
-        "modified": 1495346889923,
+        "previousModTime": 1498291497215,
+        "modified": 1498291497215,
         "seen": true,
         "name": "module/frameProcess.js"
       },
       "module/nodeFunction.js": {
-        "previousModTime": 1495346889924,
-        "modified": 1495346889924,
+        "previousModTime": 1498291497227,
+        "modified": 1498291497227,
         "seen": true,
         "name": "module/nodeFunction.js"
       },
       "module/transDataProcess.js": {
-        "previousModTime": 1498287123773,
-        "modified": 1498287123773,
+        "previousModTime": 1498291497235,
+        "modified": 1498291497235,
         "seen": true,
         "name": "module/transDataProcess.js"
       },
       "openSerial.js": {
-        "previousModTime": 1495346889925,
-        "modified": 1495346889925,
+        "previousModTime": 1498291497242,
+        "modified": 1498291497242,
         "seen": true,
         "name": "openSerial.js"
       },
       "xdk/xdk/project-info.json": {
-        "previousModTime": 1495348084267,
-        "modified": 1495348084267,
+        "previousModTime": 1498291497250,
+        "modified": 1498291497250,
         "seen": true,
         "name": "xdk/xdk/project-info.json"
       }
     },
     "boardFileStatus": {
       "main.js": {
-        "previousModTime": 1498288309344
+        "previousModTime": 1498384990224
       }
     }
   }
