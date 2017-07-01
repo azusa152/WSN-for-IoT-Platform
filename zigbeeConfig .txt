@@ -21,9 +21,6 @@ Router1
 13A200
 40C8D185
 
-ROUTER2
-13A200
-4071F80D
 
 ROUTER3
 13A200
@@ -49,6 +46,11 @@ COR2_HC (XBP24C )
 
 CE (Coordinator Enable)Enable§@¬°Coordinator 
 			       dis ¬°router
+
+
+ROUTER1_HC
+13A200
+4071F80D
 
 ROUTER2_HC
 13A200
