@@ -46,13 +46,9 @@ var emergencyFlag=Boolean(false);
 var recoverFlag=Boolean(false);
 
 ////////////////////////////////ip setting
-<<<<<<< HEAD
 var ponte_ip='';
-var gateway_ip="192.168.1.142";
-=======
-var ponte_ip='134.208.3.207';
 var gateway_ip="192.168.1.128";
->>>>>>> 5fa41139b6ea1f108394373c246782f2ead2bf52
+var ponte_ip='134.208.3.206';
 var gateway_uuid=Base64.encodeURI(gateway_ip);
 
 
@@ -225,7 +221,7 @@ function put_sensor_data_to_ponte(payload){
 }
 */
 //////////////////////////////////////////////////////////////////////////////////////////////HTTP
-
+/*
 server = http.createServer(function (req, res) {
     path = url.parse(req.url);
     var ponte_address='';
@@ -412,9 +408,8 @@ function put_sensor_data_to_ponte(payload){
     console.log('>>>'+sensor_data_topic);
     console.log('>>>'+body);
 }
-
+*/
 ///////////////////////////////////////////////////////////////////// MQTT
-/*
 
 var client = mqtt.connect('mqtt://'+ponte_ip +':1883');
 
@@ -590,7 +585,7 @@ function put_sensor_data_to_ponte(payload){
 }
 
 
-*/
+
 /////////////////////////////////xbee action
 // All frames parsed by the XBee will be emitted here
 xbeeAPI.on('frame_object', function (frame) {
